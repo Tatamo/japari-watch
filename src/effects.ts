@@ -60,6 +60,15 @@ export class EffectManager extends PIXI.Container {
 			(sprite as Effect).update();
 		}
 	}
+	title(){
+		this.arai_san_label.setLife(-1);
+		this.catch_effect[1].setLife(-1);
+	}
+	startGame(){
+		this.arai_san_label.setLife(0);
+		this.catch_effect[1].setLife(0);
+		this.game_start_label.setLife(10);
+	}
 	catchHat(x: number) {
 		this.catch_effect[x].setLife(2);
 	}

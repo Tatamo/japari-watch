@@ -98,7 +98,7 @@ export class Fennec extends PIXI.Sprite {
 			// 33%の確率で帽子を落とす
 			if (Math.random() < 0.33) {
 				this.drop();
-				this.hat_wait = 4;
+				this.hat_wait = 3;
 			}
 			else {
 				this.move();

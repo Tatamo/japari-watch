@@ -4,7 +4,10 @@ import {EntityManager} from "./entitymanager";
 import {InputController} from "./input";
 import {EffectManager} from "./effects";
 
+export type GameState = "ready" | "in-game" | "gameover";
+
 export class Game {
+	state: GameState;
 	ticker: PIXI.ticker.Ticker;
 	renderer: PIXI.WebGLRenderer | PIXI.CanvasRenderer;
 	stage: PIXI.Container;
@@ -15,6 +18,7 @@ export class Game {
 	effect_manager: EffectManager;
 	input: InputController;
 	constructor(parent: HTMLElement) {
+		this.state = "ready";
 		PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
 		this.ticker = new PIXI.ticker.Ticker();
@@ -70,14 +74,24 @@ export class Game {
 			this.effect_manager.miss(x);
 		});
 
+		this.input.on("keydown", (key: number) => {
+			if (this.state === "ready") {
+				this.state = "in-game";
+				this.effect_manager.startGame();
+			}
+		});
+
 		this.score_manager.resetScore();
 		this.miss_manager.resetScore();
+		this.effect_manager.title();
 		this.renderer.render(this.stage);
 		this.ticker.start();
 	}
 
 	update() {
-		this.entity_manager.update();
+		if (this.state === "in-game") {
+			this.entity_manager.update();
+		}
 		this.effect_manager.update();
 		this.renderer.render(this.stage);
 	}
