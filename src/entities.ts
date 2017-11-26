@@ -19,39 +19,41 @@ export class AraiSan extends PIXI.Sprite {
 	constructor() {
 		super();
 		this.gridx = 1;
-
-		this.texture = AraiSan.textures[this.gridx];
-		this.x = AraiSan.spritesheet_position[this.gridx][0];
-		this.y = AraiSan.spritesheet_position[this.gridx][1];
+		this.updateTexture();
 	}
 	update() {
-		// this.move();
-
-		this.texture = AraiSan.textures[this.gridx];
-		this.x = AraiSan.spritesheet_position[this.gridx][0];
-		this.y = AraiSan.spritesheet_position[this.gridx][1];
+		this.updateTexture();
 		this.emit("update");
 	}
-	moveLeft(){
+	updateTexture() {
+		this.texture = AraiSan.textures[this.gridx];
+		this.x = AraiSan.spritesheet_position[this.gridx][0];
+		this.y = AraiSan.spritesheet_position[this.gridx][1];
+	}
+	moveLeft() {
 		this.gridx -= 1;
-		if(this.gridx < 0) this.gridx = 0;
-		this.texture = AraiSan.textures[this.gridx];
-		this.x = AraiSan.spritesheet_position[this.gridx][0];
-		this.y = AraiSan.spritesheet_position[this.gridx][1];
+		if (this.gridx < 0) this.gridx = 0;
+		this.updateTexture();
+		this.emit("check-catch");
+		this.emit("re-render");
 	}
-	moveRight(){
+	moveRight() {
 		this.gridx += 1;
-		if(this.gridx > 2) this.gridx = 2;
-		this.texture = AraiSan.textures[this.gridx];
-		this.x = AraiSan.spritesheet_position[this.gridx][0];
-		this.y = AraiSan.spritesheet_position[this.gridx][1];
+		if (this.gridx > 2) this.gridx = 2;
+		this.updateTexture();
+		this.emit("check-catch");
+		this.emit("re-render");
 	}
-	move(direction: number = 0) {
-		if (direction !== 0) this.gridx += direction;
-		if (this.gridx <= 0) this.gridx = 1;
-		else if (this.gridx >= 2) this.gridx = 1;
-		else {
-			this.gridx += Math.random() < 0.5 ? -1 : 1;
+	checkCatch(hats: PIXI.Container) {
+		for (const hat of hats.children) {
+			if (!(hat instanceof Hat)) continue;
+			const hx = hat.getGridX();
+			const hy = hat.getGridY();
+			if (hy === 8 && hx === 2 && this.gridx === 1 ||
+				hy === 9 && hx === 0 && this.gridx === 0 ||
+				hy === 9 && hx === 4 && this.gridx === 2) {
+				this.emit("catch", hat);
+			}
 		}
 	}
 }
@@ -78,9 +80,7 @@ export class Fennec extends PIXI.Sprite {
 		this.gridx = 2;
 		this.hat_wait = 0;
 
-		this.texture = Fennec.textures[this.gridx];
-		this.x = Fennec.spritesheet_position[this.gridx][0];
-		this.y = Fennec.spritesheet_position[this.gridx][1];
+		this.updateTexture();
 	}
 	update() {
 		// 動くか帽子を落とすか決める
@@ -100,10 +100,13 @@ export class Fennec extends PIXI.Sprite {
 			}
 		}
 
+		this.updateTexture();
+		this.emit("update");
+	}
+	updateTexture() {
 		this.texture = Fennec.textures[this.gridx];
 		this.x = Fennec.spritesheet_position[this.gridx][0];
 		this.y = Fennec.spritesheet_position[this.gridx][1];
-		this.emit("update");
 	}
 	move() {
 		if (this.gridx <= 0) this.gridx = 1;
@@ -143,6 +146,8 @@ export class Hat extends PIXI.Sprite {
 	private gridx: number;
 	private gridy: number;
 	private remove_count: number;
+	private is_caught: boolean;
+	private alive: boolean;
 	static initTextures() {
 		if (this.is_initialized) return;
 		for (const line of this.spritesheet_position) {
@@ -175,28 +180,40 @@ export class Hat extends PIXI.Sprite {
 		}
 		this.gridy = 0;
 		this.remove_count = 2;
+		this.alive = true;
 
-		this.texture = Hat.textures[this.gridy][this.gridx]!;
-		this.x = Hat.spritesheet_position[this.gridy][this.gridx]![0];
-		this.y = Hat.spritesheet_position[this.gridy][this.gridx]![1];
+		this.updateTexture();
+	}
+	getGridX(): number {
+		return this.gridx;
+	}
+	getGridY(): number {
+		return this.gridy;
+	}
+	isAlive(): boolean {
+		return this.alive;
 	}
 	update() {
-		if (this.gridy > 9 && this.remove_count > 0) {
+		if ((this.gridy > 9 || this.is_caught) && this.remove_count > 0) {
 			this.remove_count -= 1;
 		}
 		else if (this.remove_count <= 0) {
-			this.emit("die");
+			this.alive = false;
 		}
 
-		this.move();
+		if (!this.is_caught) this.move();
 
-		// caught/miss check
-		this.checkCaught();
+		if (this.gridy >= 10) {
+			this.emit("miss");
+		}
 
+		this.updateTexture();
+		this.emit("update");
+	}
+	updateTexture() {
 		this.texture = Hat.textures[this.gridy][this.gridx]!;
 		this.x = Hat.spritesheet_position[this.gridy][this.gridx]![0];
 		this.y = Hat.spritesheet_position[this.gridy][this.gridx]![1];
-		this.emit("update");
 	}
 	move() {
 		if (this.gridy < 8) {
@@ -221,10 +238,9 @@ export class Hat extends PIXI.Sprite {
 		else if (this.gridy === 9) {
 			this.gridy += 1;
 		}
+		this.emit("check-catch");
 	}
-	checkCaught() {
-		if (this.gridy >= 10) {
-			this.emit("miss");
-		}
+	caught() {
+		this.is_caught = true;
 	}
 }

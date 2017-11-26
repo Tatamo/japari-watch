@@ -14,8 +14,9 @@ export class EntityManager extends EventEmitter {
 	private createHat(n: number): Hat {
 		// Hat Factory
 		const result = new Hat(n);
-		result.once("die", () => {
-			this.hats.removeChild(result);
+		// add callback
+		result.on("check-catch", () => {
+			this.arai_san.checkCatch(this.hats);
 		});
 		return result;
 	}
@@ -37,13 +38,19 @@ export class EntityManager extends EventEmitter {
 		input.on("keydown", (key: number) => {
 			if (key === 37) {
 				this.arai_san.moveLeft();
-				renderer.render(this.stage); // 再描画
 			}
 			else if (key === 39) {
 				this.arai_san.moveRight();
-				renderer.render(this.stage); // 再描画
 			}
 		});
+
+		this.arai_san.on("check-catch", () => this.arai_san.checkCatch(this.hats)); // hatsの参照を流し込む
+
+		this.arai_san.on("catch", (hat: Hat) => {
+			hat.caught();
+		});
+
+		this.arai_san.on("re-render", () => renderer.render(this.stage)); // 再描画
 
 		this.fennec.on("drop", (n: number) => {
 			this.hats.addChild(this.createHat(n));
@@ -55,5 +62,12 @@ export class EntityManager extends EventEmitter {
 		}
 		this.arai_san.update();
 		this.fennec.update();
+
+		// remove dead hats
+		for (const hat of this.hats.children.slice()) {
+			if (!(hat as Hat).isAlive()) {
+				this.hats.removeChild(hat);
+			}
+		}
 	}
 }
