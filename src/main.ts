@@ -1,3 +1,5 @@
 import {Game} from "./game";
 
-(() => new Game(document.body))();
+let high_score = 0;
+
+(() => new Game(document.body).on("high-score", (score: number) => high_score = score))();

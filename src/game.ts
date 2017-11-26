@@ -3,11 +3,13 @@ import {ScoreManager} from "./score";
 import {EntityManager} from "./entitymanager";
 import {InputController} from "./input";
 import {EffectManager} from "./effects";
+import EventEmitter = PIXI.utils.EventEmitter;
 
-export type GameState = "ready" | "in-game" | "gameover";
+export type GameState = "title" | "in-game" | "gameover";
 
-export class Game {
+export class Game extends EventEmitter {
 	state: GameState;
+	high_score: number;
 	ticker: PIXI.ticker.Ticker;
 	renderer: PIXI.WebGLRenderer | PIXI.CanvasRenderer;
 	stage: PIXI.Container;
@@ -18,7 +20,9 @@ export class Game {
 	effect_manager: EffectManager;
 	input: InputController;
 	constructor(parent: HTMLElement) {
-		this.state = "ready";
+		super();
+		this.state = "title";
+		this.high_score = 0;
 		PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
 		this.ticker = new PIXI.ticker.Ticker();
@@ -66,12 +70,16 @@ export class Game {
 
 		this.entity_manager.on("catch", (x: number) => {
 			this.score_manager.addScore();
+			if (this.score_manager.score > this.high_score) {
+				this.high_score = this.score_manager.score;
+				this.emit("high-score", this.high_score);
+			}
 			this.effect_manager.catchHat(x);
 			if ([10, 20, 30, 50, 100, 200, 400, 600, 800, 999].indexOf(this.score_manager.score) !== -1) {
 				// 高スコアを達成するとフェネックがほめてくれるのだ
 				this.effect_manager.getCoolScore();
 			}
-			if(this.score_manager.score%200 == 0 || this.score_manager.score === 998){
+			if (this.score_manager.score % 200 == 0 || this.score_manager.score === 998) {
 				// スコア200ごとにミスのカウントをリセット
 				this.miss_manager.resetScore();
 			}
@@ -82,15 +90,17 @@ export class Game {
 			this.effect_manager.miss(x);
 			if (this.miss_manager.score >= 3) {
 				this.state = "gameover";
+				this.emit("gameover", this.score_manager.score);
 				this.entity_manager.resetGame();
 				this.effect_manager.gameOver();
 			}
 		});
 
 		this.input.on("keydown", (key: number) => {
-			if (this.state === "ready") {
+			if (this.state === "title") {
 				this.state = "in-game";
 				this.effect_manager.startGame();
+				this.emit("start");
 			}
 			else if ((this.state === "in-game" || this.state === "gameover") && key === 84) { // 't' key
 				this.resetGame();
@@ -115,12 +125,13 @@ export class Game {
 		this.renderer.render(this.stage);
 	}
 	resetGame() {
-		this.state = "ready";
+		this.state = "title";
 		this.score_manager.resetScore();
 		this.miss_manager.resetScore();
 		this.entity_manager.resetGame();
 		this.effect_manager.resetGame();
 		this.effect_manager.title();
+		this.emit("title");
 		this.renderer.render(this.stage);
 	}
 }
