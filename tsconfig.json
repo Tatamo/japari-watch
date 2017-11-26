@@ -3,7 +3,7 @@
 		"strictNullChecks": true,
 		"noImplicitAny": true,
 		"target": "es6",
-		"declaration": true,
+		"declaration": false,
 		"noEmitOnError": true
 	},
 	"include": [
