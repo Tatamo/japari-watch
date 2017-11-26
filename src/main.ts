@@ -1,3 +1,3 @@
 import {Game} from "./game";
 
-new Game(document.body);
+(() => new Game(document.body))();
