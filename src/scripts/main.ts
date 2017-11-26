@@ -2,4 +2,4 @@ import {Game} from "./game";
 
 let high_score = 0;
 
-(() => new Game(document.body).on("high-score", (score: number) => high_score = score))();
+window.addEventListener("DOMContentLoaded", () => new Game(document.getElementById("game")!).on("high-score", (score: number) => high_score = score));

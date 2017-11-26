@@ -2,10 +2,9 @@
   "name": "japari-watch",
   "version": "0.0.1",
   "description": "",
-  "main": "index.js",
   "scripts": {
-	"build:clean":"rimraf dist/",
-    "build:static": "cpx \"src/**/*.{html,png}\" dist/ && cpx \"src/externals/**/*.js\" dist/externals/",
+    "build:clean": "rimraf dist/",
+    "build:static": "cpx \"src/**/*.{html,png,js,css}\" dist/",
     "build": "npm run build:clean && webpack && npm run build:static"
   },
   "repository": {
