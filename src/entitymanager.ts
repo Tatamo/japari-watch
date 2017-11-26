@@ -1,11 +1,13 @@
 import * as PIXI from "pixi.js";
 import {AraiSan, Fennec, Hat} from "./entities";
+import EventEmitter = PIXI.utils.EventEmitter;
 
-export class EntityManager {
+export class EntityManager extends EventEmitter{
 	private arai_san: AraiSan;
 	private fennec: Fennec;
 	private hats: Array<Hat>;
 	constructor(private stage:PIXI.Container) {
+		super();
 		// init entities
 		AraiSan.initTextures();
 		this.arai_san = new AraiSan;
