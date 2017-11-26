@@ -1,7 +1,6 @@
 import * as PIXI from "pixi.js";
 import {AraiSan, Fennec, Hat} from "./entities";
 import EventEmitter = PIXI.utils.EventEmitter;
-import {SevenSeg} from "./score";
 
 export class EntityManager extends EventEmitter {
 	private arai_san: AraiSan;
