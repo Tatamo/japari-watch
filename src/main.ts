@@ -11,7 +11,6 @@ const stage = new PIXI.Container();
 document.body.appendChild(renderer.view);
 
 PIXI.loader.add("background", "assets/background.png");
-PIXI.loader.add("sprite", "assets/sprite.png");
 PIXI.loader.add("arai_san", "assets/arai_san.png");
 PIXI.loader.add("fennec", "assets/fennec.png");
 PIXI.loader.add("hats", "assets/hats.png");
@@ -19,16 +18,13 @@ PIXI.loader.add("misc", "assets/misc.png");
 PIXI.loader.load(setup);
 
 let background: PIXI.Sprite;
-let sprite: PIXI.Sprite;
 let entity_manager: EntityManager;
 
 function setup() {
 	background = new PIXI.Sprite(PIXI.loader.resources["background"].texture);
-	sprite = new PIXI.Sprite(PIXI.loader.resources["sprite"].texture);
 
 	stage.scale.x = stage.scale.y = 4.0;
 	stage.addChild(background);
-	// stage.addChild(sprite);
 	renderer.render(stage);
 	init();
 	ticker.start();
@@ -50,7 +46,6 @@ function init() {
 }
 
 function update() {
-	sprite.x += 10;
 	entity_manager.update();
 	renderer.render(stage);
 }
