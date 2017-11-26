@@ -28,7 +28,7 @@ export class Game extends EventEmitter {
 		this.ticker = new PIXI.ticker.Ticker();
 		this.ticker.speed = 1 / 60;
 		this.ticker.add((() => {
-			const tick_interval = 1 / 3;
+			const tick_interval = 0.3;
 			let tick_count = 0;
 			return ((delta: number) => {
 				tick_count += delta;
