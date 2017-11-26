@@ -1,6 +1,7 @@
 import * as PIXI from "pixi.js";
 import {ScoreManager} from "./score";
 import {EntityManager} from "./entitymanager";
+import {InputController} from "./input";
 
 export class Game {
 	ticker: PIXI.ticker.Ticker;
@@ -10,6 +11,7 @@ export class Game {
 	entity_manager: EntityManager;
 	score_manager: ScoreManager;
 	miss_manager: ScoreManager;
+	input: InputController;
 	constructor(parent: HTMLElement) {
 		PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
@@ -32,6 +34,7 @@ export class Game {
 		this.stage = new PIXI.Container();
 		this.stage.scale.x = this.stage.scale.y = 4.0;
 
+		this.input = new InputController();
 		this.loadAssets();
 	}
 	loadAssets() {
@@ -49,7 +52,7 @@ export class Game {
 		this.stage.addChild(this.background);
 		this.renderer.render(this.stage);
 
-		this.entity_manager = new EntityManager(this.stage);
+		this.entity_manager = new EntityManager(this.stage, this.input, this.renderer);
 		this.score_manager = new ScoreManager(this.stage, 1, 8);
 		this.miss_manager = new ScoreManager(this.stage, 113, 8);
 

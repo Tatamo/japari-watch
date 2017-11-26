@@ -25,15 +25,29 @@ export class AraiSan extends PIXI.Sprite {
 		this.y = AraiSan.spritesheet_position[this.gridx][1];
 	}
 	update() {
-		// 動くか帽子を落とすか決める
-		this.move();
+		// this.move();
 
 		this.texture = AraiSan.textures[this.gridx];
 		this.x = AraiSan.spritesheet_position[this.gridx][0];
 		this.y = AraiSan.spritesheet_position[this.gridx][1];
 		this.emit("update");
 	}
-	move() {
+	moveLeft(){
+		this.gridx -= 1;
+		if(this.gridx < 0) this.gridx = 0;
+		this.texture = AraiSan.textures[this.gridx];
+		this.x = AraiSan.spritesheet_position[this.gridx][0];
+		this.y = AraiSan.spritesheet_position[this.gridx][1];
+	}
+	moveRight(){
+		this.gridx += 1;
+		if(this.gridx > 2) this.gridx = 2;
+		this.texture = AraiSan.textures[this.gridx];
+		this.x = AraiSan.spritesheet_position[this.gridx][0];
+		this.y = AraiSan.spritesheet_position[this.gridx][1];
+	}
+	move(direction: number = 0) {
+		if (direction !== 0) this.gridx += direction;
 		if (this.gridx <= 0) this.gridx = 1;
 		else if (this.gridx >= 2) this.gridx = 1;
 		else {
@@ -167,10 +181,10 @@ export class Hat extends PIXI.Sprite {
 		this.y = Hat.spritesheet_position[this.gridy][this.gridx]![1];
 	}
 	update() {
-		if(this.gridy > 9 && this.remove_count > 0){
+		if (this.gridy > 9 && this.remove_count > 0) {
 			this.remove_count -= 1;
 		}
-		else if(this.remove_count <= 0){
+		else if (this.remove_count <= 0) {
 			this.emit("die");
 		}
 
@@ -208,7 +222,7 @@ export class Hat extends PIXI.Sprite {
 			this.gridy += 1;
 		}
 	}
-	checkCaught(){
+	checkCaught() {
 		if (this.gridy >= 10) {
 			this.emit("miss");
 		}
