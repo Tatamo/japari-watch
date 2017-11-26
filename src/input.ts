@@ -1,3 +1,4 @@
+import * as PIXI from "pixi.js";
 import EventEmitter = PIXI.utils.EventEmitter;
 
 export class InputController extends EventEmitter {
