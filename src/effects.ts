@@ -108,6 +108,9 @@ export class EffectManager extends PIXI.Container {
 	miss(x: number) {
 		this.miss_effect[x].setLife(2);
 	}
+	getCoolScore() {
+		this.fennec_label.setLife(10);
+	}
 }
 
 export class Effect extends PIXI.Sprite {

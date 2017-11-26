@@ -67,6 +67,9 @@ export class Game {
 		this.entity_manager.on("catch", (x: number) => {
 			this.score_manager.addScore();
 			this.effect_manager.catchHat(x);
+			if ([10, 20, 30, 50, 100, 200, 400, 600, 800, 999].indexOf(this.score_manager.score) !== -1) {
+				this.effect_manager.getCoolScore();
+			}
 		});
 
 		this.entity_manager.on("miss", (x: number) => {
