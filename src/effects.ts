@@ -10,7 +10,7 @@ export class EffectManager extends PIXI.Container {
 	private catch_effect: Array<Effect>;
 	private miss_effect: Array<Effect>;
 
-	private counter: number;
+	private title_animation_counter: number;
 	constructor(private stage: PIXI.Container) {
 		super();
 		stage.addChild(this);
@@ -61,13 +61,13 @@ export class EffectManager extends PIXI.Container {
 			if (!(sprite instanceof Effect)) continue;
 			(sprite as Effect).update();
 		}
-		if (this.counter > 0) {
-			this.counter -= 1;
-			if (this.counter === 0) {
+		if (this.title_animation_counter > 0) {
+			this.title_animation_counter -= 1;
+			if (this.title_animation_counter === 0) {
 				this.arai_san_label.setLife(2);
 				this.catch_effect[1].setLife(2);
 				this.arai_san_label.once("die", () => {
-					this.counter = 2;
+					this.title_animation_counter = 2;
 				});
 			}
 		}
@@ -79,12 +79,12 @@ export class EffectManager extends PIXI.Container {
 		this.fennec_label.setLife(0);
 		for (const ef of this.catch_effect) ef.setLife(0);
 		for (const ef of this.miss_effect) ef.setLife(0);
-		this.counter = 2;
+		this.title_animation_counter = 2;
 	}
 	title() {
 		this.arai_san_label.setLife(2);
 		this.arai_san_label.once("die", () => {
-			this.counter = 2;
+			this.title_animation_counter = 2;
 		});
 		this.catch_effect[1].setLife(2);
 	}
@@ -93,7 +93,14 @@ export class EffectManager extends PIXI.Container {
 		this.arai_san_label.setLife(0);
 		this.catch_effect[1].setLife(0);
 		this.game_start_label.setLife(10);
-		this.counter = -1;
+		this.title_animation_counter = -1;
+	}
+	gameOver() {
+		this.game_over_label.setLife(10);
+		this.miss_effect[1].setLife(10);
+		this.game_over_label.once("die", () => {
+			this.emit("return-to-title");
+		})
 	}
 	catchHat(x: number) {
 		this.catch_effect[x].setLife(2);

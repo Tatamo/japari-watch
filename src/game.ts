@@ -72,6 +72,11 @@ export class Game {
 		this.entity_manager.on("miss", (x: number) => {
 			this.miss_manager.addScore();
 			this.effect_manager.miss(x);
+			if (this.miss_manager.score >= 3) {
+				this.state = "gameover";
+				this.entity_manager.resetGame();
+				this.effect_manager.gameOver();
+			}
 		});
 
 		this.input.on("keydown", (key: number) => {
@@ -79,10 +84,12 @@ export class Game {
 				this.state = "in-game";
 				this.effect_manager.startGame();
 			}
-			else if (this.state === "in-game" && key === 84) { // 't' key
-				this.state = "ready";
+			else if ((this.state === "in-game" || this.state === "gameover") && key === 84) { // 't' key
 				this.resetGame();
 			}
+		});
+		this.effect_manager.on("return-to-title", () => {
+			this.resetGame();
 		});
 
 		this.score_manager.resetScore();
@@ -100,6 +107,7 @@ export class Game {
 		this.renderer.render(this.stage);
 	}
 	resetGame() {
+		this.state = "ready";
 		this.score_manager.resetScore();
 		this.miss_manager.resetScore();
 		this.entity_manager.resetGame();
