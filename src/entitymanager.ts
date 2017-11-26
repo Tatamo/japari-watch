@@ -64,7 +64,7 @@ export class EntityManager extends EventEmitter {
 			(hat as Hat).update(); // downcast
 		}
 		this.arai_san.update();
-		this.arai_san.checkCatch(this.hats)
+		this.arai_san.checkCatch(this.hats);
 		this.fennec.update();
 
 		// remove dead hats

@@ -16,10 +16,12 @@ export class ScoreManager extends PIXI.Container {
 	addScore() {
 		if (this._score < 999) {
 			this._score += 1;
+			this.updateScore();
 		}
 	}
 	resetScore() {
 		this._score = 0;
+		this.updateScore();
 	}
 	private updateScore() {
 		const score_numbers = [Math.floor(this.score / 100), Math.floor((this.score / 10) % 10), Math.floor(this.score % 10)];
