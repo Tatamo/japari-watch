@@ -19,6 +19,10 @@ export class AraiSan extends PIXI.Sprite {
 	constructor() {
 		super();
 		this.gridx = 1;
+
+		this.texture = AraiSan.textures[this.gridx];
+		this.x = AraiSan.spritesheet_position[this.gridx][0];
+		this.y = AraiSan.spritesheet_position[this.gridx][1];
 	}
 	update() {
 		// 動くか帽子を落とすか決める
@@ -59,10 +63,28 @@ export class Fennec extends PIXI.Sprite {
 		super();
 		this.gridx = 2;
 		this.hat_wait = 0;
+
+		this.texture = Fennec.textures[this.gridx];
+		this.x = Fennec.spritesheet_position[this.gridx][0];
+		this.y = Fennec.spritesheet_position[this.gridx][1];
 	}
 	update() {
 		// 動くか帽子を落とすか決める
-		this.move();
+		if (this.hat_wait > 0) {
+			// 帽子を落としたばかりなら必ず移動
+			this.hat_wait -= 1;
+			this.move();
+		}
+		else {
+			// 33%の確率で帽子を落とす
+			if (Math.random() < 0.33) {
+				this.drop();
+				this.hat_wait = 2;
+			}
+			else {
+				this.move();
+			}
+		}
 
 		this.texture = Fennec.textures[this.gridx];
 		this.x = Fennec.spritesheet_position[this.gridx][0];
@@ -75,6 +97,9 @@ export class Fennec extends PIXI.Sprite {
 		else {
 			this.gridx += Math.random() < 0.5 ? -1 : 1;
 		}
+	}
+	drop() {
+		this.emit("drop", this.gridx);
 	}
 }
 
@@ -134,6 +159,10 @@ export class Hat extends PIXI.Sprite {
 				this.direction = -1;
 		}
 		this.gridy = 0;
+
+		this.texture = Hat.textures[this.gridy][this.gridx]!;
+		this.x = Hat.spritesheet_position[this.gridy][this.gridx]![0];
+		this.y = Hat.spritesheet_position[this.gridy][this.gridx]![1];
 	}
 	update() {
 		this.move();
