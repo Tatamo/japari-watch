@@ -79,7 +79,7 @@ export class Fennec extends PIXI.Sprite {
 			// 33%の確率で帽子を落とす
 			if (Math.random() < 0.33) {
 				this.drop();
-				this.hat_wait = 2;
+				this.hat_wait = 4;
 			}
 			else {
 				this.move();
@@ -128,6 +128,7 @@ export class Hat extends PIXI.Sprite {
 	private direction: -1 | 1; // -1 to left, +1 to right
 	private gridx: number;
 	private gridy: number;
+	private remove_count: number;
 	static initTextures() {
 		if (this.is_initialized) return;
 		for (const line of this.spritesheet_position) {
@@ -159,17 +160,24 @@ export class Hat extends PIXI.Sprite {
 				this.direction = -1;
 		}
 		this.gridy = 0;
+		this.remove_count = 2;
 
 		this.texture = Hat.textures[this.gridy][this.gridx]!;
 		this.x = Hat.spritesheet_position[this.gridy][this.gridx]![0];
 		this.y = Hat.spritesheet_position[this.gridy][this.gridx]![1];
 	}
 	update() {
-		this.move();
-		// miss check
-		if (this.gridy >= 10) {
-			this.emit("miss");
+		if(this.gridy > 9 && this.remove_count > 0){
+			this.remove_count -= 1;
 		}
+		else if(this.remove_count <= 0){
+			this.emit("die");
+		}
+
+		this.move();
+
+		// caught/miss check
+		this.checkCaught();
 
 		this.texture = Hat.textures[this.gridy][this.gridx]!;
 		this.x = Hat.spritesheet_position[this.gridy][this.gridx]![0];
@@ -198,6 +206,11 @@ export class Hat extends PIXI.Sprite {
 		}
 		else if (this.gridy === 9) {
 			this.gridy += 1;
+		}
+	}
+	checkCaught(){
+		if (this.gridy >= 10) {
+			this.emit("miss");
 		}
 	}
 }

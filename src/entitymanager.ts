@@ -10,9 +10,17 @@ export class EntityManager extends EventEmitter {
 		super();
 		this.init();
 
-		this.fennec.on("drop", (x: number) => {
-			this.hats.addChild(new Hat(x));
-		})
+		this.fennec.on("drop", (n: number) => {
+			this.hats.addChild(this.createHat(n));
+		});
+	}
+	private createHat(n: number): Hat {
+		// Hat Factory
+		const result = new Hat(n);
+		result.once("die", () => {
+			this.hats.removeChild(result);
+		});
+		return result;
 	}
 	init() {
 		// init entities
@@ -29,10 +37,10 @@ export class EntityManager extends EventEmitter {
 		this.stage.addChild(this.hats);
 	}
 	update() {
-		this.arai_san.update();
-		this.fennec.update();
 		for (const hat of this.hats.children) {
 			(hat as Hat).update(); // downcast
 		}
+		this.arai_san.update();
+		this.fennec.update();
 	}
 }
