@@ -18,8 +18,7 @@ export class AraiSan extends PIXI.Sprite {
 	}
 	constructor() {
 		super();
-		this.gridx = 1;
-		this.updateTexture();
+		this.reset();
 	}
 	getGridX(): number {
 		return this.gridx;
@@ -32,6 +31,10 @@ export class AraiSan extends PIXI.Sprite {
 		this.texture = AraiSan.textures[this.gridx];
 		this.x = AraiSan.spritesheet_position[this.gridx][0];
 		this.y = AraiSan.spritesheet_position[this.gridx][1];
+	}
+	reset() {
+		this.gridx = 1;
+		this.updateTexture();
 	}
 	moveLeft() {
 		this.gridx -= 1;
@@ -82,10 +85,7 @@ export class Fennec extends PIXI.Sprite {
 	}
 	constructor() {
 		super();
-		this.gridx = 2;
-		this.hat_wait = 0;
-
-		this.updateTexture();
+		this.reset();
 	}
 	update() {
 		// 動くか帽子を落とすか決める
@@ -122,6 +122,11 @@ export class Fennec extends PIXI.Sprite {
 	}
 	drop() {
 		this.emit("drop", this.gridx);
+	}
+	reset() {
+		this.gridx = 2;
+		this.hat_wait = 0;
+		this.updateTexture();
 	}
 }
 

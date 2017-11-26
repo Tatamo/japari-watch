@@ -60,11 +60,19 @@ export class EffectManager extends PIXI.Container {
 			(sprite as Effect).update();
 		}
 	}
-	title(){
+	resetGame() {
+		this.game_start_label.setLife(0);
+		this.game_over_label.setLife(0);
+		this.arai_san_label.setLife(0);
+		this.fennec_label.setLife(0);
+		for (const ef of this.catch_effect) ef.setLife(0);
+		for (const ef of this.miss_effect) ef.setLife(0);
+	}
+	title() {
 		this.arai_san_label.setLife(-1);
 		this.catch_effect[1].setLife(-1);
 	}
-	startGame(){
+	startGame() {
 		this.arai_san_label.setLife(0);
 		this.catch_effect[1].setLife(0);
 		this.game_start_label.setLife(10);

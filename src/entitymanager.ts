@@ -77,4 +77,12 @@ export class EntityManager extends EventEmitter {
 			}
 		}
 	}
+	resetGame() {
+		this.arai_san.reset();
+		this.fennec.reset();
+		this.stage.removeChild(this.hats);
+		this.hats.destroy();
+		this.hats = new PIXI.Container();
+		this.stage.addChild(this.hats);
+	}
 }

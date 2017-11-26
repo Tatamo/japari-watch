@@ -21,7 +21,7 @@ export class InputController extends EventEmitter {
 				else if (event.keyCode === 39) {
 					this.is_pressed_right = true;
 				}
-				if (event.keyCode === 37 || event.keyCode === 39) {
+				if ([37, 39, 84].indexOf(event.keyCode) !== -1) {
 					this.emit("keydown", event.keyCode);
 					event.preventDefault();
 				}

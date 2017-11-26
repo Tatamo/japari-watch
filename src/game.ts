@@ -79,6 +79,10 @@ export class Game {
 				this.state = "in-game";
 				this.effect_manager.startGame();
 			}
+			else if (this.state === "in-game" && key === 84) { // 't' key
+				this.state = "ready";
+				this.resetGame();
+			}
 		});
 
 		this.score_manager.resetScore();
@@ -93,6 +97,14 @@ export class Game {
 			this.entity_manager.update();
 		}
 		this.effect_manager.update();
+		this.renderer.render(this.stage);
+	}
+	resetGame() {
+		this.score_manager.resetScore();
+		this.miss_manager.resetScore();
+		this.entity_manager.resetGame();
+		this.effect_manager.resetGame();
+		this.effect_manager.title();
 		this.renderer.render(this.stage);
 	}
 }
