@@ -65,6 +65,11 @@ export class Game {
 			this.effect_manager.catchHat(x);
 		});
 
+		this.entity_manager.on("miss", (x: number) => {
+			this.miss_manager.addScore();
+			this.effect_manager.miss(x);
+		});
+
 		this.score_manager.resetScore();
 		this.miss_manager.resetScore();
 		this.renderer.render(this.stage);

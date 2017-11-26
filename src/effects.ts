@@ -63,6 +63,9 @@ export class EffectManager extends PIXI.Container {
 	catchHat(x: number) {
 		this.catch_effect[x].setLife(2);
 	}
+	miss(x: number) {
+		this.miss_effect[x].setLife(2);
+	}
 }
 
 export class Effect extends PIXI.Sprite {

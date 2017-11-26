@@ -15,6 +15,9 @@ export class EntityManager extends EventEmitter {
 		// Hat Factory
 		const result = new Hat(n);
 		// add some callback
+		result.on("miss", () => {
+			this.emit("miss", this.arai_san.getGridX());
+		});
 
 		return result;
 	}

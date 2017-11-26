@@ -21,6 +21,9 @@ export class AraiSan extends PIXI.Sprite {
 		this.gridx = 1;
 		this.updateTexture();
 	}
+	getGridX(): number {
+		return this.gridx;
+	}
 	update() {
 		this.updateTexture();
 		this.emit("update");
@@ -208,10 +211,6 @@ export class Hat extends PIXI.Sprite {
 
 		if (!this.is_caught) this.move();
 
-		if (this.gridy >= 10) {
-			this.emit("miss");
-		}
-
 		this.updateTexture();
 		this.emit("update");
 	}
@@ -235,6 +234,7 @@ export class Hat extends PIXI.Sprite {
 				// center
 				this.gridx += this.direction;
 				this.gridy += 2;
+				this.emit("miss");
 			}
 			else {
 				this.gridy += 1;
@@ -242,6 +242,7 @@ export class Hat extends PIXI.Sprite {
 		}
 		else if (this.gridy === 9) {
 			this.gridy += 1;
+			this.emit("miss");
 		}
 	}
 	caught() {
