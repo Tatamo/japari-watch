@@ -29,7 +29,7 @@ export class Game extends EventEmitter {
 		this.ticker.speed = 1 / 60;
 		this.ticker.add((() => {
 			const tick_interval = 0.3;
-			let tick_count = 0;
+			let tick_count = -1.5; // 最初のupdateだけ時間をかける (スプライト全表示を見せるため)
 			return ((delta: number) => {
 				tick_count += delta;
 				if (tick_count < tick_interval) return;
@@ -54,6 +54,7 @@ export class Game extends EventEmitter {
 		PIXI.loader.add("hats", "assets/hats.png");
 		PIXI.loader.add("numbers", "assets/numbers.png");
 		PIXI.loader.add("misc", "assets/misc.png");
+		PIXI.loader.add("all_sprites", "assets/sprite.png");
 		PIXI.loader.load(this.setup.bind(this)); // おまじない
 	}
 	// called after loading
@@ -113,7 +114,13 @@ export class Game extends EventEmitter {
 		this.score_manager.resetScore();
 		this.miss_manager.resetScore();
 		this.effect_manager.title();
+
+
+		const initial_view = new PIXI.Sprite(PIXI.loader.resources["all_sprites"].texture);
+		this.stage.addChild(initial_view);
 		this.renderer.render(this.stage);
+		this.stage.removeChild(initial_view);
+
 		this.ticker.start();
 	}
 
