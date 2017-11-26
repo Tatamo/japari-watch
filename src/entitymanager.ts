@@ -14,10 +14,8 @@ export class EntityManager extends EventEmitter {
 	private createHat(n: number): Hat {
 		// Hat Factory
 		const result = new Hat(n);
-		// add callback
-		result.on("check-catch", () => {
-			this.arai_san.checkCatch(this.hats);
-		});
+		// add some callback
+
 		return result;
 	}
 	init(input: InputController, renderer: PIXI.WebGLRenderer | PIXI.CanvasRenderer) {
@@ -47,7 +45,12 @@ export class EntityManager extends EventEmitter {
 		this.arai_san.on("check-catch", () => this.arai_san.checkCatch(this.hats)); // hatsの参照を流し込む
 
 		this.arai_san.on("catch", (hat: Hat) => {
+			// x: アライさんの位置
+			let x = hat.getGridX();
+			if (x === 2) x = 1;
+			else if (x === 4) x = 2;
 			hat.caught();
+			this.emit("catch", x);
 		});
 
 		this.arai_san.on("re-render", () => renderer.render(this.stage)); // 再描画
@@ -61,6 +64,7 @@ export class EntityManager extends EventEmitter {
 			(hat as Hat).update(); // downcast
 		}
 		this.arai_san.update();
+		this.arai_san.checkCatch(this.hats)
 		this.fennec.update();
 
 		// remove dead hats

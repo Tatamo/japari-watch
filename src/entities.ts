@@ -52,7 +52,9 @@ export class AraiSan extends PIXI.Sprite {
 			if (hy === 8 && hx === 2 && this.gridx === 1 ||
 				hy === 9 && hx === 0 && this.gridx === 0 ||
 				hy === 9 && hx === 4 && this.gridx === 2) {
-				this.emit("catch", hat);
+				if (!hat.isCaught()) {
+					this.emit("catch", hat);
+				}
 			}
 		}
 	}
@@ -179,7 +181,7 @@ export class Hat extends PIXI.Sprite {
 				this.direction = -1;
 		}
 		this.gridy = 0;
-		this.remove_count = 2;
+		this.remove_count = 1;
 		this.alive = true;
 
 		this.updateTexture();
@@ -192,6 +194,9 @@ export class Hat extends PIXI.Sprite {
 	}
 	isAlive(): boolean {
 		return this.alive;
+	}
+	isCaught(): boolean {
+		return this.is_caught;
 	}
 	update() {
 		if ((this.gridy > 9 || this.is_caught) && this.remove_count > 0) {
@@ -238,7 +243,6 @@ export class Hat extends PIXI.Sprite {
 		else if (this.gridy === 9) {
 			this.gridy += 1;
 		}
-		this.emit("check-catch");
 	}
 	caught() {
 		this.is_caught = true;

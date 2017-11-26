@@ -59,6 +59,14 @@ export class Game {
 		this.miss_manager = new ScoreManager(this.stage, 113, 8);
 		this.effect_manager = new EffectManager(this.stage);
 
+
+		this.entity_manager.on("catch", (x: number) => {
+			this.score_manager.addScore();
+			this.effect_manager.catchHat(x);
+		});
+
+		this.score_manager.resetScore();
+		this.miss_manager.resetScore();
 		this.renderer.render(this.stage);
 		this.ticker.start();
 	}
