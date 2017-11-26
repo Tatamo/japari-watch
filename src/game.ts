@@ -68,7 +68,12 @@ export class Game {
 			this.score_manager.addScore();
 			this.effect_manager.catchHat(x);
 			if ([10, 20, 30, 50, 100, 200, 400, 600, 800, 999].indexOf(this.score_manager.score) !== -1) {
+				// 高スコアを達成するとフェネックがほめてくれるのだ
 				this.effect_manager.getCoolScore();
+			}
+			if(this.score_manager.score%200 == 0 || this.score_manager.score === 998){
+				// スコア200ごとにミスのカウントをリセット
+				this.miss_manager.resetScore();
 			}
 		});
 
