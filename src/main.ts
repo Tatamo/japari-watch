@@ -1,5 +1,6 @@
 import * as PIXI from "pixi.js";
 import {EntityManager} from "./entitymanager";
+import {ScoreManager} from "./score";
 
 PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
@@ -14,6 +15,7 @@ PIXI.loader.add("background", "assets/background.png");
 PIXI.loader.add("arai_san", "assets/arai_san.png");
 PIXI.loader.add("fennec", "assets/fennec.png");
 PIXI.loader.add("hats", "assets/hats.png");
+PIXI.loader.add("numbers", "assets/numbers.png");
 PIXI.loader.add("misc", "assets/misc.png");
 PIXI.loader.load(setup);
 
@@ -43,6 +45,8 @@ ticker.add((() => {
 
 function init() {
 	entity_manager = new EntityManager(stage);
+	const score_manager = new ScoreManager(stage, 1, 8);
+	const miss_manager = new ScoreManager(stage, 113, 8);
 }
 
 function update() {

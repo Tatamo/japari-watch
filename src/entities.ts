@@ -7,11 +7,14 @@ gridx: 左の列から順に[0,2]
 export class AraiSan extends PIXI.Sprite {
 	static spritesheet_position: Array<Array<number>> = [[16, 97, 24, 30], [51, 97, 27, 30], [88, 97, 24, 30]];
 	static textures: Array<PIXI.Texture> = [];
+	static is_initialized: boolean = false;
 	private gridx: number;
 	static initTextures() {
+		if (this.is_initialized) return;
 		for (const pos of this.spritesheet_position) {
 			this.textures.push(new PIXI.Texture(PIXI.loader.resources["arai_san"].texture.baseTexture, new PIXI.Rectangle(...pos)));
 		}
+		this.is_initialized = true;
 	}
 	constructor() {
 		super();
@@ -42,12 +45,15 @@ gridx: 左の列から順に[0,3]
 export class Fennec extends PIXI.Sprite {
 	static spritesheet_position: Array<Array<number>> = [[17, 1, 22, 23], [41, 1, 22, 23], [65, 1, 22, 23], [89, 1, 22, 23]];
 	static textures: Array<PIXI.Texture> = [];
+	static is_initialized: boolean = false;
 	private gridx: number;
 	private hat_wait: number;
 	static initTextures() {
+		if (this.is_initialized) return;
 		for (const pos of this.spritesheet_position) {
 			this.textures.push(new PIXI.Texture(PIXI.loader.resources["fennec"].texture.baseTexture, new PIXI.Rectangle(...pos)));
 		}
+		this.is_initialized = true;
 	}
 	constructor() {
 		super();
@@ -93,10 +99,12 @@ export class Hat extends PIXI.Sprite {
 		[[3, 115, 16, 12], [39, 115, 16, 12], null, [74, 115, 16, 12], [110, 115, 16, 12]]
 	];
 	static textures: Array<Array<PIXI.Texture | null>> = [];
+	static is_initialized: boolean = false;
 	private direction: -1 | 1; // -1 to left, +1 to right
 	private gridx: number;
 	private gridy: number;
 	static initTextures() {
+		if (this.is_initialized) return;
 		for (const line of this.spritesheet_position) {
 			this.textures.push([]);
 			for (const pos of line) {
@@ -104,6 +112,7 @@ export class Hat extends PIXI.Sprite {
 				else this.textures[this.textures.length - 1].push(new PIXI.Texture(PIXI.loader.resources["hats"].texture.baseTexture, new PIXI.Rectangle(...(pos!))));
 			}
 		}
+		this.is_initialized = true;
 	}
 	constructor(fennec_x: number) {
 		super();

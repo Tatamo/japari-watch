@@ -1,12 +1,13 @@
 import * as PIXI from "pixi.js";
 import {AraiSan, Fennec, Hat} from "./entities";
 import EventEmitter = PIXI.utils.EventEmitter;
+import {SevenSeg} from "./score";
 
-export class EntityManager extends EventEmitter{
+export class EntityManager extends EventEmitter {
 	private arai_san: AraiSan;
 	private fennec: Fennec;
 	private hats: Array<Hat>;
-	constructor(private stage:PIXI.Container) {
+	constructor(private stage: PIXI.Container) {
 		super();
 		// init entities
 		AraiSan.initTextures();
