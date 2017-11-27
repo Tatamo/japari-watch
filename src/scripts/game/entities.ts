@@ -9,6 +9,7 @@ export class AraiSan extends PIXI.Sprite {
 	static textures: Array<PIXI.Texture> = [];
 	static is_initialized: boolean = false;
 	private gridx: number;
+
 	static initTextures() {
 		if (this.is_initialized) return;
 		for (const pos of this.spritesheet_position) {
@@ -16,26 +17,32 @@ export class AraiSan extends PIXI.Sprite {
 		}
 		this.is_initialized = true;
 	}
+
 	constructor() {
 		super();
 		this.reset();
 	}
+
 	getGridX(): number {
 		return this.gridx;
 	}
+
 	update() {
 		this.updateTexture();
 		this.emit("update");
 	}
+
 	updateTexture() {
 		this.texture = AraiSan.textures[this.gridx];
 		this.x = AraiSan.spritesheet_position[this.gridx][0];
 		this.y = AraiSan.spritesheet_position[this.gridx][1];
 	}
+
 	reset() {
 		this.gridx = 1;
 		this.updateTexture();
 	}
+
 	moveLeft() {
 		this.gridx -= 1;
 		if (this.gridx < 0) this.gridx = 0;
@@ -43,6 +50,7 @@ export class AraiSan extends PIXI.Sprite {
 		this.emit("check-catch");
 		this.emit("re-render");
 	}
+
 	moveRight() {
 		this.gridx += 1;
 		if (this.gridx > 2) this.gridx = 2;
@@ -50,6 +58,7 @@ export class AraiSan extends PIXI.Sprite {
 		this.emit("check-catch");
 		this.emit("re-render");
 	}
+
 	checkCatch(hats: PIXI.Container) {
 		for (const hat of hats.children) {
 			if (!(hat instanceof Hat)) continue;
@@ -76,6 +85,7 @@ export class Fennec extends PIXI.Sprite {
 	static is_initialized: boolean = false;
 	private gridx: number;
 	private hat_wait: number;
+
 	static initTextures() {
 		if (this.is_initialized) return;
 		for (const pos of this.spritesheet_position) {
@@ -83,10 +93,12 @@ export class Fennec extends PIXI.Sprite {
 		}
 		this.is_initialized = true;
 	}
+
 	constructor() {
 		super();
 		this.reset();
 	}
+
 	update() {
 		// 動くか帽子を落とすか決める
 		if (this.hat_wait > 0) {
@@ -108,11 +120,13 @@ export class Fennec extends PIXI.Sprite {
 		this.updateTexture();
 		this.emit("update");
 	}
+
 	updateTexture() {
 		this.texture = Fennec.textures[this.gridx];
 		this.x = Fennec.spritesheet_position[this.gridx][0];
 		this.y = Fennec.spritesheet_position[this.gridx][1];
 	}
+
 	move() {
 		if (this.gridx <= 0) this.gridx = 1;
 		else if (this.gridx >= 3) this.gridx = 2;
@@ -120,9 +134,11 @@ export class Fennec extends PIXI.Sprite {
 			this.gridx += Math.random() < 0.5 ? -1 : 1;
 		}
 	}
+
 	drop() {
 		this.emit("drop", this.gridx);
 	}
+
 	reset() {
 		this.gridx = 2;
 		this.hat_wait = 0;
@@ -158,6 +174,7 @@ export class Hat extends PIXI.Sprite {
 	private remove_count: number;
 	private is_caught: boolean;
 	private alive: boolean;
+
 	static initTextures() {
 		if (this.is_initialized) return;
 		for (const line of this.spritesheet_position) {
@@ -169,6 +186,7 @@ export class Hat extends PIXI.Sprite {
 		}
 		this.is_initialized = true;
 	}
+
 	constructor(fennec_x: number) {
 		super();
 		switch (fennec_x) {
@@ -194,18 +212,23 @@ export class Hat extends PIXI.Sprite {
 
 		this.updateTexture();
 	}
+
 	getGridX(): number {
 		return this.gridx;
 	}
+
 	getGridY(): number {
 		return this.gridy;
 	}
+
 	isAlive(): boolean {
 		return this.alive;
 	}
+
 	isCaught(): boolean {
 		return this.is_caught;
 	}
+
 	update() {
 		if ((this.gridy > 9 || this.is_caught) && this.remove_count > 0) {
 			this.remove_count -= 1;
@@ -219,11 +242,13 @@ export class Hat extends PIXI.Sprite {
 		this.updateTexture();
 		this.emit("update");
 	}
+
 	updateTexture() {
 		this.texture = Hat.textures[this.gridy][this.gridx]!;
 		this.x = Hat.spritesheet_position[this.gridy][this.gridx]![0];
 		this.y = Hat.spritesheet_position[this.gridy][this.gridx]![1];
 	}
+
 	move() {
 		if (this.gridy < 8) {
 			// 斜めに落ちていく
@@ -250,6 +275,7 @@ export class Hat extends PIXI.Sprite {
 			this.emit("miss");
 		}
 	}
+
 	caught() {
 		this.is_caught = true;
 	}

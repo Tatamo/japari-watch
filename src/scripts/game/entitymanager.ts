@@ -1,16 +1,21 @@
 import * as PIXI from "pixi.js";
 import {AraiSan, Fennec, Hat} from "./entities";
 import EventEmitter = PIXI.utils.EventEmitter;
-import {InputController} from "./input";
 
 export class EntityManager extends EventEmitter {
 	private arai_san: AraiSan;
 	private fennec: Fennec;
 	private hats: PIXI.Container;
-	constructor(private stage: PIXI.Container, input: InputController, renderer: PIXI.WebGLRenderer | PIXI.CanvasRenderer) {
-		super();
-		this.init(input, renderer);
+
+	get player(): AraiSan {
+		return this.arai_san;
 	}
+
+	constructor(private stage: PIXI.Container, renderer: PIXI.WebGLRenderer | PIXI.CanvasRenderer) {
+		super();
+		this.init(renderer);
+	}
+
 	private createHat(n: number): Hat {
 		// Hat Factory
 		const result = new Hat(n);
@@ -18,10 +23,10 @@ export class EntityManager extends EventEmitter {
 		result.on("miss", () => {
 			this.emit("miss", this.arai_san.getGridX());
 		});
-
 		return result;
 	}
-	init(input: InputController, renderer: PIXI.WebGLRenderer | PIXI.CanvasRenderer) {
+
+	init(renderer: PIXI.WebGLRenderer | PIXI.CanvasRenderer) {
 		// init entities
 		AraiSan.initTextures();
 		this.arai_san = new AraiSan;
@@ -36,15 +41,6 @@ export class EntityManager extends EventEmitter {
 		this.stage.addChild(this.hats);
 
 		// set callbacks
-		input.on("keydown", (key: number) => {
-			if (key === 37) {
-				this.arai_san.moveLeft();
-			}
-			else if (key === 39) {
-				this.arai_san.moveRight();
-			}
-		});
-
 		this.arai_san.on("check-catch", () => this.arai_san.checkCatch(this.hats)); // hatsの参照を流し込む
 
 		this.arai_san.on("catch", (hat: Hat) => {
@@ -62,6 +58,7 @@ export class EntityManager extends EventEmitter {
 			this.hats.addChild(this.createHat(n));
 		});
 	}
+
 	update() {
 		for (const hat of this.hats.children) {
 			(hat as Hat).update(); // downcast
@@ -77,6 +74,7 @@ export class EntityManager extends EventEmitter {
 			}
 		}
 	}
+
 	resetGame() {
 		this.arai_san.reset();
 		this.fennec.reset();

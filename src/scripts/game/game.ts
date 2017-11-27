@@ -19,6 +19,7 @@ export class Game extends EventEmitter {
 	miss_manager: ScoreManager;
 	effect_manager: EffectManager;
 	input: InputController;
+
 	constructor(parent: HTMLElement) {
 		super();
 		this.state = "title";
@@ -47,6 +48,7 @@ export class Game extends EventEmitter {
 		this.input = new InputController();
 		this.loadAssets();
 	}
+
 	loadAssets() {
 		PIXI.loader.add("background", "assets/background.png");
 		PIXI.loader.add("arai_san", "assets/arai_san.png");
@@ -57,13 +59,14 @@ export class Game extends EventEmitter {
 		PIXI.loader.add("all_sprites", "assets/sprite.png");
 		PIXI.loader.load(this.setup.bind(this)); // おまじない
 	}
+
 	// called after loading
 	setup() {
 		this.background = new PIXI.Sprite(PIXI.loader.resources["background"].texture);
 		this.stage.addChild(this.background);
 		this.renderer.render(this.stage);
 
-		this.entity_manager = new EntityManager(this.stage, this.input, this.renderer);
+		this.entity_manager = new EntityManager(this.stage, this.renderer);
 		this.score_manager = new ScoreManager(this.stage, 1, 8);
 		this.miss_manager = new ScoreManager(this.stage, 113, 8);
 		this.effect_manager = new EffectManager(this.stage);
@@ -97,24 +100,61 @@ export class Game extends EventEmitter {
 			}
 		});
 
-		this.input.on("keydown", (key: number) => {
+		const startGame = () => {
+			this.state = "in-game";
+			this.effect_manager.startGame();
+			this.emit("start");
+		};
+		const getInput = (key: "left" | "right" | "reset") => {
 			if (this.state === "title") {
-				this.state = "in-game";
-				this.effect_manager.startGame();
-				this.emit("start");
+				startGame();
 			}
-			else if ((this.state === "in-game" || this.state === "gameover") && key === 84) { // 't' key
-				this.resetGame();
+			else if (this.state === "in-game") {
+				switch (key) {
+					case "left":
+						this.entity_manager.player.moveLeft();
+						break;
+					case "right":
+						this.entity_manager.player.moveRight();
+						break;
+					case "reset":
+						this.resetGame();
+						break;
+				}
 			}
+		};
+
+		this.input.on("keydown", (key: number) => {
+			if (key === 37) getInput("left");
+			else if (key === 39) getInput("right");
+			else if (key === 84) getInput("reset");
 		});
 		this.effect_manager.on("return-to-title", () => {
 			this.resetGame();
 		});
 
+		const left_button = new PIXI.Sprite(PIXI.Texture.EMPTY);
+		this.stage.addChild(left_button);
+		left_button.x = left_button.y = 0;
+		left_button.height = 128;
+		left_button.width = 64;
+		left_button.interactive = true;
+		left_button.on("click", () => getInput("left"));
+		left_button.on("touchstart", () => getInput("left"));
+
+		const right_button = new PIXI.Sprite(PIXI.Texture.EMPTY);
+		this.stage.addChild(right_button);
+		right_button.x = 64;
+		right_button.y = 0;
+		right_button.height = 128;
+		right_button.width = 64;
+		right_button.interactive = true;
+		right_button.on("click", () => getInput("right"));
+		right_button.on("touchstart", () => getInput("right"));
+
 		this.score_manager.resetScore();
 		this.miss_manager.resetScore();
 		this.effect_manager.title();
-
 
 		const initial_view = new PIXI.Sprite(PIXI.loader.resources["all_sprites"].texture);
 		this.stage.addChild(initial_view);
@@ -131,6 +171,7 @@ export class Game extends EventEmitter {
 		this.effect_manager.update();
 		this.renderer.render(this.stage);
 	}
+
 	resetGame() {
 		this.state = "title";
 		this.score_manager.resetScore();

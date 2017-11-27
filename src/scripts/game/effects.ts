@@ -11,12 +11,14 @@ export class EffectManager extends PIXI.Container {
 	private miss_effect: Array<Effect>;
 
 	private title_animation_counter: number;
+
 	constructor(private stage: PIXI.Container) {
 		super();
 		stage.addChild(this);
 		this.init();
 		this.resetGame();
 	}
+
 	init() {
 		const bt = PIXI.loader.resources["misc"].texture.baseTexture;
 		this.score_label = new PIXI.Sprite(new PIXI.Texture(bt, new PIXI.Rectangle(1, 1, 14, 5)));
@@ -56,6 +58,7 @@ export class EffectManager extends PIXI.Container {
 		this.miss_effect[2].setTransform(84, 104);
 		for (const ef of this.miss_effect) this.addChild(ef);
 	}
+
 	update() {
 		for (const sprite of this.children) {
 			if (!(sprite instanceof Effect)) continue;
@@ -72,6 +75,7 @@ export class EffectManager extends PIXI.Container {
 			}
 		}
 	}
+
 	resetGame() {
 		this.game_start_label.setLife(0);
 		this.game_over_label.setLife(0);
@@ -81,6 +85,7 @@ export class EffectManager extends PIXI.Container {
 		for (const ef of this.miss_effect) ef.setLife(0);
 		this.title_animation_counter = 2;
 	}
+
 	title() {
 		this.arai_san_label.setLife(2);
 		this.arai_san_label.once("die", () => {
@@ -88,6 +93,7 @@ export class EffectManager extends PIXI.Container {
 		});
 		this.catch_effect[1].setLife(2);
 	}
+
 	startGame() {
 		this.arai_san_label.removeAllListeners();
 		this.arai_san_label.setLife(0);
@@ -95,6 +101,7 @@ export class EffectManager extends PIXI.Container {
 		this.game_start_label.setLife(10);
 		this.title_animation_counter = -1;
 	}
+
 	gameOver() {
 		this.game_over_label.setLife(10);
 		this.miss_effect[1].setLife(10);
@@ -102,12 +109,15 @@ export class EffectManager extends PIXI.Container {
 			this.emit("return-to-title");
 		})
 	}
+
 	catchHat(x: number) {
 		this.catch_effect[x].setLife(2);
 	}
+
 	miss(x: number) {
 		this.miss_effect[x].setLife(2);
 	}
+
 	getCoolScore() {
 		this.fennec_label.setLife(10);
 	}
@@ -118,10 +128,12 @@ export class Effect extends PIXI.Sprite {
 	get state(): "live" | "die" | "immortal" {
 		return this._state;
 	}
+
 	constructor(texture: PIXI.Texture, private life: number) {
 		super(texture);
 		this.setLife(life);
 	}
+
 	setLife(life: number) {
 		this.life = life;
 		if (this.life > 0) {
@@ -137,6 +149,7 @@ export class Effect extends PIXI.Sprite {
 			this.visible = true;
 		}
 	}
+
 	update() {
 		if (this.life > 0) {
 			this.life -= 1;
