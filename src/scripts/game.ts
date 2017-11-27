@@ -76,7 +76,7 @@ export class Game extends EventEmitter {
 				this.emit("high-score", this.high_score);
 			}
 			this.effect_manager.catchHat(x);
-			if ([10, 20, 30, 50, 100, 200, 400, 600, 800, 999].indexOf(this.score_manager.score) !== -1) {
+			if ([10, 20, 30, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 999].indexOf(this.score_manager.score) !== -1) {
 				// 高スコアを達成するとフェネックがほめてくれるのだ
 				this.effect_manager.getCoolScore();
 			}
