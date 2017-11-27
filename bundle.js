@@ -83,7 +83,7 @@ var generateURL = function generateURL(text, url, hashtags) {
 };
 var generateTweet = function generateTweet(score) {
     var text = score + "\u70B9\u3068\u3063\u305F\u306E\u3060\uFF01";
-    var url = "http://tatamo.github.io/japari-watch";
+    var url = "https://tatamo.github.io/japari-watch/";
     var hashtags = "じゃぱりうぉっち";
     return generateURL(text, url, hashtags);
 };
