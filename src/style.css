@@ -1,0 +1,8 @@
+.container {
+  width: 512px;
+  margin: 0 auto;
+}
+
+#game > canvas{
+  border-radius: 4px;
+}
