@@ -1,7 +1,7 @@
 {
   "name": "japari-watch",
-  "version": "0.0.1",
-  "description": "",
+  "version": "0.1.0",
+  "description": "アライさんにおまかせなのだ",
   "scripts": {
     "build:clean": "rimraf dist/",
     "build:static": "cpx \"src/**/*.{html,png,ico,js,css}\" dist/",
