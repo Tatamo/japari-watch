@@ -1,4 +1,4 @@
-import {Game} from "./game";
+import {Game} from "./game/game";
 
 let high_score = 0;
 
