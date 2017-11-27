@@ -1,0 +1,27 @@
+.container {
+  width: 512px;
+  margin: 0 auto;
+
+  /*
+  ゲーム中に文字が選択されたくないので文字選択を無効化
+   */
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
+
+#game > canvas {
+  border-radius: 4px;
+}
+
+/* for mobile */
+@media screen and (max-width: 640px) {
+  body {
+    margin: 0;
+  }
+
+  .container {
+    width: 100%;
+    height: auto;
+  }
+}
