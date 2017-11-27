@@ -6,7 +6,7 @@ const generateURL = (text: string, url: string, hashtags: string): string => {
 
 const generateTweet = (score: number): string => {
 	const text = `${score}点とったのだ！`;
-	const url = "http://tatamo.github.io/japari-watch";
+	const url = "https://tatamo.github.io/japari-watch/";
 	const hashtags = "じゃぱりうぉっち";
 	return generateURL(text, url, hashtags);
 };

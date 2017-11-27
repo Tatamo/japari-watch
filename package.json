@@ -4,7 +4,7 @@
   "description": "アライさんにおまかせなのだ",
   "scripts": {
     "build:clean": "rimraf dist/",
-    "build:static": "cpx \"src/**/*.{html,png,ico,js,css}\" dist/",
+    "build:static": "cpx \"src/**/*.{html,png,ico,js,css,json,xml}\" dist/",
     "build": "npm run build:clean && webpack && npm run build:static"
   },
   "repository": {
