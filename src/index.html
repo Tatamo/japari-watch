@@ -4,10 +4,27 @@
     <meta charset="UTF-8">
     <title>じゃぱりうぉっち</title>
     <link rel="stylesheet" href="style.css">
+    <script>window.twttr = (function (d, s, id) {
+		let js, fjs = d.getElementsByTagName(s)[0],
+			t = window.twttr || {};
+		if (d.getElementById(id)) return t;
+		js = d.createElement(s);
+		js.id = id;
+		js.src = "https://platform.twitter.com/widgets.js";
+		fjs.parentNode.insertBefore(js, fjs);
+
+		t._e = [];
+		t.ready = function (f) {
+			t._e.push(f);
+		};
+
+		return t;
+	}(document, "script", "twitter-wjs"));</script>
     <script src="externals/pixi.min.js"></script>
     <script src="bundle.js"></script>
 </head>
 <body>
 <div id="game"></div>
+<p><a id="tweet-link" href="https://twitter.com/intent/tweet?text=フェネック「アライさんに似合いそうな帽子を見つけてきたよー」%0aアライグマ「ありがとうなのだ！」%0a&url=http://tatamo.github.io/japari-watch&hashtags=じゃぱりうぉっち">得点をつぶやくのだ</a></p>
 </body>
 </html>
