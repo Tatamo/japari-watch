@@ -4,8 +4,19 @@
   "description": "アライさんにおまかせなのだ",
   "scripts": {
     "build:clean": "rimraf dist/",
-    "build:static": "cpx \"src/**/*.{html,png,ico,js,css,json,xml}\" dist/",
-    "build": "npm run build:clean && webpack && npm run build:static"
+    "build:rootstatic": "cpx 'src/*' dist/",
+    "build:assets": "cpx 'src/assets/**/*' dist/assets/",
+    "build:externals": "cpx 'src/externals/**/*' dist/externals/",
+    "build:favicons": "cpx 'src/favicons/**/*' dist/favicons/",
+    "build:static": "npm run build:rootstatic && npm run build:assets && npm run build:externals && npm run build:favicons",
+    "build": "npm run build:clean && webpack && npm run build:static",
+    "browser-sync": "browser-sync start --server --serveStatic dist --files 'dist/**/*'",
+    "watch:rootstatic": "chokidar \"src/*\" -c \"npm run build:rootstatic\"",
+    "watch:assets": "chokidar \"src/assets/**/*\" -c \"npm run build:assets\"",
+    "watch:externals": "chokidar \"src/externals/**/*\" -c \"npm run build:externals\"",
+    "watch:favicons": "chokidar \"src/favicons/**/*\" -c \"npm run build:favicons\"",
+    "watch:static": "npm run watch:rootstatic & npm run watch:assets & npm run watch:externals & npm run watch:favicons",
+    "watch": "npm run build && ( webpack --watch & npm run watch:static & npm run browser-sync )"
   },
   "repository": {
     "type": "git",
@@ -25,6 +36,8 @@
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.2",
     "babel-preset-env": "^1.6.1",
+    "browser-sync": "^2.18.13",
+    "chokidar-cli": "^1.2.0",
     "cpx": "^1.5.0",
     "rimraf": "^2.6.2",
     "ts-loader": "^3.1.1",

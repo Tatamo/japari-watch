@@ -1,16 +1,16 @@
 {
-	"compilerOptions": {
-		"strictNullChecks": true,
-		"noImplicitAny": true,
-		"target": "es6",
-		"declaration": false,
-		"noEmitOnError": true
-	},
-	"include": [
-		"src/**/*.ts"
-	],
-	"exclude": [
-		"node_modules",
-		"dist"
-	]
+  "compilerOptions": {
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "target": "es6",
+    "declaration": false,
+    "noEmitOnError": true
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }

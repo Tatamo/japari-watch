@@ -11,6 +11,7 @@ export class ScoreManager extends PIXI.Container {
 		SevenSeg.initTextures();
 		this.score_sprites = [new SevenSeg(x, y, 8), new SevenSeg(x + 5, y, 8), new SevenSeg(x + 10, y, 8)];
 		for (let i = 0; i < 3; i++) this.addChild(this.score_sprites[i]);
+		this.resetScore();
 		stage.addChild(this);
 	}
 	addScore() {
