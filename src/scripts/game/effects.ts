@@ -121,6 +121,10 @@ export class EffectManager extends PIXI.Container {
 	getCoolScore() {
 		this.fennec_label.setLife(10);
 	}
+
+	enterAIMode(){
+		this.arai_san_label.setLife(10);
+	}
 }
 
 export class Effect extends PIXI.Sprite {

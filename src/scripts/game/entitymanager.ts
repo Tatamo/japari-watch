@@ -42,6 +42,7 @@ export class EntityManager extends EventEmitter {
 
 		// set callbacks
 		this.arai_san.on("check-catch", () => this.arai_san.checkCatch(this.hats)); // hatsの参照を流し込む
+		this.arai_san.on("move-auto", () => this.arai_san.moveAuto(this.hats)); // hatsの参照を流し込む
 
 		this.arai_san.on("catch", (hat: Hat) => {
 			// x: アライさんの位置

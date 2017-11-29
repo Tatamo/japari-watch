@@ -9,6 +9,7 @@ export class AraiSan extends PIXI.Sprite {
 	static textures: Array<PIXI.Texture> = [];
 	static is_initialized: boolean = false;
 	private gridx: number;
+	private aimode: boolean;
 
 	static initTextures() {
 		if (this.is_initialized) return;
@@ -20,6 +21,7 @@ export class AraiSan extends PIXI.Sprite {
 
 	constructor() {
 		super();
+		this.aimode = false;
 		this.reset();
 	}
 
@@ -27,7 +29,16 @@ export class AraiSan extends PIXI.Sprite {
 		return this.gridx;
 	}
 
+	getAIMode(): boolean {
+		return this.aimode;
+	}
+
+	setAIMode(mode: boolean) {
+		this.aimode = mode;
+	}
+
 	update() {
+		if (this.aimode) this.emit("move-auto");
 		this.updateTexture();
 		this.emit("update");
 	}
@@ -41,6 +52,115 @@ export class AraiSan extends PIXI.Sprite {
 	reset() {
 		this.gridx = 1;
 		this.updateTexture();
+	}
+
+	moveAuto(hats: PIXI.Container) {
+		let target: Hat | null = null;
+		for (const hat of hats.children) {
+			if (!(hat as Hat).isAlive() || (hat as Hat).isCaught() || (hat as Hat).getGridY() > 10) continue;
+			if (target === null) target = hat as Hat;
+			else if ((hat as Hat).getGridY() > target.getGridY()) {
+				target = hat as Hat;
+			}
+		}
+		if (target === null) {
+			// move random
+			const rand = Math.random();
+			if (rand < 0.4) this.moveLeft();
+			else if (rand < 0.8) this.moveRight();
+			return;
+		}
+		// 帽子の落下予測位置とそれまでの時間を予測
+		let hx = target.getGridX();
+		let hy = target.getGridY();
+		let dir = target.getDirection();
+
+		let goal_x = -1;
+		let time_remain = 0;
+		while (hy < 10) {
+			if (hy === 9 && hx === 0) {
+				goal_x = 0;
+				break;
+			}
+			else if (hy === 8 && hx === 2) {
+				goal_x = 1;
+				break;
+			}
+			else if (hy === 9 && hx === 4) {
+				goal_x = 2;
+				break;
+			}
+
+			if (hy < 8) {
+				// 斜めに落ちていく
+				hx += dir;
+				if (dir === 1 && hx >= 4 ||
+					dir === -1 && hx <= 0) {
+					dir *= -1;
+				}
+				hy += 1;
+			}
+			else if (hy === 8) {
+				if (hx === 2) {
+					// center
+					hx += dir;
+					hy += 2;
+				}
+				else {
+					hy += 1;
+				}
+			}
+			else if (hy === 9) {
+				hy += 1;
+			}
+			time_remain += 1;
+		}
+
+		if (Math.abs(goal_x - this.gridx) > time_remain) {
+			// ぼうしに向かわないと間に合わない
+			if (goal_x < this.gridx) this.moveLeft();
+			else if (goal_x > this.gridx) this.moveRight();
+			return;
+		}
+		if(goal_x === this.gridx && time_remain <= 1){
+			// 動くと間に合わなくなる
+			return;
+		}
+
+		// 一番近いぼうしに寄せるような動きをする
+		// x: アライさんの望ましい位置
+		let x: number;
+		if (target.getDirection() === -1) {
+			if (target.getGridX() <= 1) x = 0;
+			else if (target.getGridX() <= 3) x = 1;
+			else x = 2;
+		}
+		else {
+			if (target.getGridX() <= 0) x = 0;
+			else if (target.getGridX() <= 2) x = 1;
+			else x = 2;
+		}
+		if(Math.random() < 0.85) { // 85%でしか採用しない
+			if (x < this.gridx) {
+				this.moveLeft();
+				return;
+			}
+			else if (x > this.gridx) {
+				this.moveRight();
+				return;
+			}
+		}
+
+		// move random
+		const rand = Math.random();
+		if(this.gridx === 1){
+			if(rand < 0.33) this.moveLeft();
+			else if(rand<0.66) this.moveRight();
+		}
+		else {
+			if (rand < 0.5) this.moveLeft();
+			else this.moveRight();
+		}
 	}
 
 	moveLeft() {
@@ -219,6 +339,10 @@ export class Hat extends PIXI.Sprite {
 
 	getGridY(): number {
 		return this.gridy;
+	}
+
+	getDirection(): -1 | 1 {
+		return this.direction;
 	}
 
 	isAlive(): boolean {
