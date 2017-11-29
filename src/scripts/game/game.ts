@@ -30,7 +30,7 @@ export class Game extends EventEmitter {
 		this.ticker.speed = 1 / 60;
 		this.ticker.add((() => {
 			const tick_interval = 0.3;
-			let tick_count = -1.5; // 最初のupdateだけ時間をかける (スプライト全表示を見せるため)
+			let tick_count = -0.9; // 最初のupdateだけ時間をかける (スプライト全表示を見せるため)
 			return ((delta: number) => {
 				tick_count += delta;
 				if (tick_count < tick_interval) return;
@@ -45,7 +45,7 @@ export class Game extends EventEmitter {
 		this.stage = new PIXI.Container();
 		this.stage.scale.x = this.stage.scale.y = 4.0;
 
-		this.input = new InputController();
+		this.input = new InputController(this.stage);
 		this.loadAssets();
 	}
 
@@ -71,7 +71,6 @@ export class Game extends EventEmitter {
 		this.miss_manager = new ScoreManager(this.stage, 113, 8);
 		this.effect_manager = new EffectManager(this.stage);
 
-
 		this.entity_manager.on("catch", (x: number) => {
 			this.score_manager.addScore();
 			if (this.score_manager.score > this.high_score) {
@@ -94,63 +93,27 @@ export class Game extends EventEmitter {
 			this.effect_manager.miss(x);
 			if (this.miss_manager.score >= 3) {
 				this.state = "gameover";
-				this.emit("gameover", this.score_manager.score);
 				this.entity_manager.resetGame();
 				this.effect_manager.gameOver();
 			}
 		});
 
-		const startGame = () => {
-			this.state = "in-game";
-			this.effect_manager.startGame();
-			this.emit("start");
-		};
-		const getInput = (key: "left" | "right" | "reset") => {
-			if (this.state === "title") {
-				startGame();
-			}
-			else if (this.state === "in-game") {
-				switch (key) {
-					case "left":
-						this.entity_manager.player.moveLeft();
-						break;
-					case "right":
-						this.entity_manager.player.moveRight();
-						break;
-					case "reset":
-						this.resetGame();
-						break;
-				}
-			}
-		};
-
-		this.input.on("keydown", (key: number) => {
-			if (key === 37) getInput("left");
-			else if (key === 39) getInput("right");
-			else if (key === 84) getInput("reset");
-		});
 		this.effect_manager.on("return-to-title", () => {
 			this.resetGame();
 		});
 
-		const left_button = new PIXI.Sprite(PIXI.Texture.EMPTY);
-		this.stage.addChild(left_button);
-		left_button.x = left_button.y = 0;
-		left_button.height = 128;
-		left_button.width = 64;
-		left_button.interactive = true;
-		left_button.on("click", () => getInput("left"));
-		left_button.on("touchstart", () => getInput("left"));
-
-		const right_button = new PIXI.Sprite(PIXI.Texture.EMPTY);
-		this.stage.addChild(right_button);
-		right_button.x = 64;
-		right_button.y = 0;
-		right_button.height = 128;
-		right_button.width = 64;
-		right_button.interactive = true;
-		right_button.on("click", () => getInput("right"));
-		right_button.on("touchstart", () => getInput("right"));
+		// user input
+		this.input.on("left", () => {
+			if (this.state === "title") this.startGame();
+			else if (this.state === "in-game") this.entity_manager.player.moveLeft();
+		});
+		this.input.on("right", () => {
+			if (this.state === "title") this.startGame();
+			else if (this.state === "in-game") this.entity_manager.player.moveRight();
+		});
+		this.input.on("reset", () => {
+			if (this.state === "in-game") this.resetGame();
+		});
 
 		this.score_manager.resetScore();
 		this.miss_manager.resetScore();
@@ -172,6 +135,11 @@ export class Game extends EventEmitter {
 		this.renderer.render(this.stage);
 	}
 
+	startGame() {
+		this.state = "in-game";
+		this.effect_manager.startGame();
+	}
+
 	resetGame() {
 		this.state = "title";
 		this.score_manager.resetScore();
@@ -179,7 +147,6 @@ export class Game extends EventEmitter {
 		this.entity_manager.resetGame();
 		this.effect_manager.resetGame();
 		this.effect_manager.title();
-		this.emit("title");
 		this.renderer.render(this.stage);
 	}
 }
