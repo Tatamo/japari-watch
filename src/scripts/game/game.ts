@@ -109,11 +109,11 @@ export class Game extends EventEmitter {
 		// user input
 		this.input.on("left", () => {
 			if (this.state === "title") this.startGame();
-			else if (this.state === "in-game") this.entity_manager.player.moveLeft();
+			else if (!this.aimode && this.state === "in-game") this.entity_manager.player.moveLeft();
 		});
 		this.input.on("right", () => {
 			if (this.state === "title") this.startGame();
-			else if (this.state === "in-game") this.entity_manager.player.moveRight();
+			else if (!this.aimode && this.state === "in-game") this.entity_manager.player.moveRight();
 		});
 		this.input.on("reset", () => {
 			if (this.state === "in-game") this.resetGame();
