@@ -12,7 +12,6 @@ export class Game extends EventEmitter {
 	high_score: number;
 	aimode: boolean;
 	is_score_aimode: boolean;
-	prepare_aimode_effect: boolean; // タイトル画面・ゲームオーバー画面でAIモードに切り替わった場合は次の開始時にエフェクトを発生させる
 	ticker: PIXI.ticker.Ticker;
 	renderer: PIXI.WebGLRenderer | PIXI.CanvasRenderer;
 	stage: PIXI.Container;
@@ -29,7 +28,6 @@ export class Game extends EventEmitter {
 		this.high_score = 0;
 		this.aimode = false;
 		this.is_score_aimode = false;
-		this.prepare_aimode_effect = false;
 		PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
 		this.ticker = new PIXI.ticker.Ticker();
@@ -144,10 +142,7 @@ export class Game extends EventEmitter {
 	startGame() {
 		this.state = "in-game";
 		this.effect_manager.startGame();
-		if (this.prepare_aimode_effect) {
-			this.prepare_aimode_effect = false;
-			this.effect_manager.enterAIMode();
-		}
+		if (this.aimode) this.effect_manager.enterAIMode();
 	}
 
 	resetGame() {
@@ -178,12 +173,6 @@ export class Game extends EventEmitter {
 			if (this.state === "in-game") {
 				this.effect_manager.enterAIMode();
 			}
-			else {
-				this.prepare_aimode_effect = true;
-			}
-		}
-		else {
-			this.prepare_aimode_effect = false;
 		}
 	}
 }
