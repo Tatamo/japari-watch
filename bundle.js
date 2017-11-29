@@ -342,7 +342,8 @@ var ScoreManager = exports.ScoreManager = function (_PIXI$Container) {
         _this.score_sprites = [new SevenSeg(x, y, 8), new SevenSeg(x + 5, y, 8), new SevenSeg(x + 10, y, 8)];
         for (var i = 0; i < 3; i++) {
             _this.addChild(_this.score_sprites[i]);
-        }stage.addChild(_this);
+        }_this.resetScore();
+        stage.addChild(_this);
         return _this;
     }
 
