@@ -16,4 +16,16 @@ const updateHighScore = (score: number) => {
 	a.setAttribute("href", generateTweet(score));
 };
 
-window.addEventListener("DOMContentLoaded", () => new Game(document.getElementById("game")!).on("high-score", updateHighScore));
+window.addEventListener("DOMContentLoaded", () => {
+	const game = new Game(document.getElementById("game")!);
+	game.on("high-score", updateHighScore);
+	const a = document.getElementById("toggle-ai-mode")!;
+	const mode_view = document.getElementById("view-ai-mode")!;
+	mode_view.innerText = game.isAIMode() ? "オン" : "オフ";
+
+	a.onclick = () => {
+		game.toggleAIMode();
+		mode_view.innerText = game.isAIMode() ? "オン" : "オフ";
+		return false;
+	};
+});

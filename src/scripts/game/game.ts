@@ -10,6 +10,8 @@ export type GameState = "title" | "in-game" | "gameover";
 export class Game extends EventEmitter {
 	state: GameState;
 	high_score: number;
+	aimode: boolean;
+	is_score_aimode: boolean;
 	ticker: PIXI.ticker.Ticker;
 	renderer: PIXI.WebGLRenderer | PIXI.CanvasRenderer;
 	stage: PIXI.Container;
@@ -24,6 +26,8 @@ export class Game extends EventEmitter {
 		super();
 		this.state = "title";
 		this.high_score = 0;
+		this.aimode = false;
+		this.is_score_aimode = false;
 		PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
 		this.ticker = new PIXI.ticker.Ticker();
@@ -73,7 +77,7 @@ export class Game extends EventEmitter {
 
 		this.entity_manager.on("catch", (x: number) => {
 			this.score_manager.addScore();
-			if (this.score_manager.score > this.high_score) {
+			if (!this.is_score_aimode && this.score_manager.score > this.high_score) {
 				this.high_score = this.score_manager.score;
 				this.emit("high-score", this.high_score);
 			}
@@ -142,11 +146,27 @@ export class Game extends EventEmitter {
 
 	resetGame() {
 		this.state = "title";
+		// AIモードのハイスコア制限を解除
+		if (!this.aimode) {
+			this.is_score_aimode = false;
+		}
 		this.score_manager.resetScore();
 		this.miss_manager.resetScore();
 		this.entity_manager.resetGame();
 		this.effect_manager.resetGame();
 		this.effect_manager.title();
 		this.renderer.render(this.stage);
+	}
+
+	isAIMode(): boolean {
+		return this.aimode;
+	}
+
+	toggleAIMode() {
+		this.aimode = !this.aimode;
+		if (this.aimode) {
+			this.is_score_aimode = true;
+		}
+		this.emit("toggle-ai-mode");
 	}
 }
