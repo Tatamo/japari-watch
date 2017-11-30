@@ -121,6 +121,12 @@ export class AraiSan extends PIXI.Sprite {
 			// ぼうしに向かわないと間に合わない
 			if (goal_x < this.gridx) this.moveLeft();
 			else if (goal_x > this.gridx) this.moveRight();
+			if (Math.abs(goal_x - this.gridx) > time_remain) {
+				setTimeout(() => {
+					if (goal_x < this.gridx) this.moveLeft();
+					else if (goal_x > this.gridx) this.moveRight();
+				}, 130);
+			}
 			return;
 		}
 		if (goal_x === this.gridx && time_remain <= 1) {
