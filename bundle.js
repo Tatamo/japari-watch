@@ -276,9 +276,7 @@ var Game = exports.Game = function (_EventEmitter) {
             }
             this.score_manager.resetScore();
             this.miss_manager.resetScore();
-            for (var i = 0; i < 190; i++) {
-                this.score_manager.addScore();
-            }this.entity_manager.resetGame();
+            this.entity_manager.resetGame();
             this.effect_manager.resetGame();
             this.effect_manager.title();
             this.renderer.render(this.stage);
