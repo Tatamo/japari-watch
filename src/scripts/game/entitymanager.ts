@@ -1,6 +1,7 @@
 import * as PIXI from "pixi.js";
 import {AraiSan, Fennec, Hat} from "./entities";
 import EventEmitter = PIXI.utils.EventEmitter;
+import {ScoreManager} from "./score";
 
 export class EntityManager extends EventEmitter {
 	private arai_san: AraiSan;
@@ -11,9 +12,9 @@ export class EntityManager extends EventEmitter {
 		return this.arai_san;
 	}
 
-	constructor(private stage: PIXI.Container, renderer: PIXI.WebGLRenderer | PIXI.CanvasRenderer) {
+	constructor(private stage: PIXI.Container, renderer: PIXI.WebGLRenderer | PIXI.CanvasRenderer, score: ScoreManager) {
 		super();
-		this.init(renderer);
+		this.init(renderer, score);
 	}
 
 	private createHat(n: number): Hat {
@@ -26,14 +27,14 @@ export class EntityManager extends EventEmitter {
 		return result;
 	}
 
-	init(renderer: PIXI.WebGLRenderer | PIXI.CanvasRenderer) {
+	init(renderer: PIXI.WebGLRenderer | PIXI.CanvasRenderer, score: ScoreManager) {
 		// init entities
 		AraiSan.initTextures();
-		this.arai_san = new AraiSan;
+		this.arai_san = new AraiSan();
 		this.stage.addChild(this.arai_san);
 
 		Fennec.initTextures();
-		this.fennec = new Fennec;
+		this.fennec = new Fennec(score);
 		this.stage.addChild(this.fennec);
 
 		Hat.initTextures();

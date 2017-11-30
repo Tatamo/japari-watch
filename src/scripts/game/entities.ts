@@ -1,4 +1,5 @@
 import * as PIXI from "pixi.js";
+import {ScoreManager} from "./score";
 
 /*
 アライさん
@@ -122,7 +123,7 @@ export class AraiSan extends PIXI.Sprite {
 			else if (goal_x > this.gridx) this.moveRight();
 			return;
 		}
-		if(goal_x === this.gridx && time_remain <= 1){
+		if (goal_x === this.gridx && time_remain <= 1) {
 			// 動くと間に合わなくなる
 			return;
 		}
@@ -140,7 +141,7 @@ export class AraiSan extends PIXI.Sprite {
 			else if (target.getGridX() <= 2) x = 1;
 			else x = 2;
 		}
-		if(Math.random() < 0.85) { // 85%でしか採用しない
+		if (Math.random() < 0.85) { // 85%でしか採用しない
 			if (x < this.gridx) {
 				this.moveLeft();
 				return;
@@ -153,9 +154,9 @@ export class AraiSan extends PIXI.Sprite {
 
 		// move random
 		const rand = Math.random();
-		if(this.gridx === 1){
-			if(rand < 0.33) this.moveLeft();
-			else if(rand<0.66) this.moveRight();
+		if (this.gridx === 1) {
+			if (rand < 0.33) this.moveLeft();
+			else if (rand < 0.66) this.moveRight();
 		}
 		else {
 			if (rand < 0.5) this.moveLeft();
@@ -195,6 +196,39 @@ export class AraiSan extends PIXI.Sprite {
 	}
 }
 
+class Queue<T> {
+	private _in: Array<T>;
+	private _out: Array<T>;
+
+	get length(): number {
+		return this._in.length + this._out.length;
+	}
+
+	constructor(iterable?: Iterable<T>) {
+		this._in = iterable === undefined ? [] : [...iterable];
+		this._out = [];
+	}
+
+	private _fix() {
+		this._out = this._in.reverse().concat(this._out);
+		this._in = [];
+	}
+
+	push(...values: Array<T>): void {
+		this._in.push(...values);
+	}
+
+	shift(): T | undefined {
+		if (this._out.length == 0) this._fix();
+		return this._out.pop();
+	}
+
+	toArray(): Array<T> {
+		this._fix();
+		return this._out.slice().reverse();
+	}
+}
+
 /*
 フェネック
 gridx: 左の列から順に[0,3]
@@ -205,6 +239,8 @@ export class Fennec extends PIXI.Sprite {
 	static is_initialized: boolean = false;
 	private gridx: number;
 	private hat_wait: number;
+	private action_queue: Queue<"left" | "right" | "drop">; // 行動キュー
+	private counter: number; // 行動決定に使用するためのカウンター
 
 	static initTextures() {
 		if (this.is_initialized) return;
@@ -214,26 +250,148 @@ export class Fennec extends PIXI.Sprite {
 		this.is_initialized = true;
 	}
 
-	constructor() {
+	constructor(private game_score: ScoreManager) {
 		super();
 		this.reset();
 	}
 
+	getHatWait(): number {
+		// スコア300未満: 3
+		// スコア600未満: 2
+		// スコア600以上: 1
+		if (this.game_score.score < 300) return 3;
+		else if (this.game_score.score < 600) return 2;
+		return 1;
+	}
+	getDropPossibility(): number {
+		let s = this.game_score.score % 300;
+		if (this.game_score.score >= 900) s = 300;
+		s /= 300.0;
+		return 0.33 + 0.33 * s;
+	}
+
 	update() {
 		// 動くか帽子を落とすか決める
-		if (this.hat_wait > 0) {
-			// 帽子を落としたばかりなら必ず移動
-			this.hat_wait -= 1;
-			this.move();
+
+		if (this.counter <= 0 && this.action_queue.length === 0) {
+			// 一定回数ぼうしを落としたあとの行動を予め決めておく
+			this.counter = Math.random() < 0.5 ? 3 : 3;
+
+			const rand = Math.random();
+			let wait = this.getHatWait() + (rand < 0.4 ? 0 : 1) + (rand < 0.8 ? 0 : 1); // +0:+1:+2 = 4:4:2
+			let gx = this.gridx;
+
+			// 基本的にはむりやり端まで移動して落とさせる
+			while (wait > 3) {
+				if (gx === 0 || gx <= 2 && Math.random() < 0.5) {
+					this.action_queue.push("right");
+					gx += 1;
+				}
+				else {
+					this.action_queue.push("left");
+					gx -= 1;
+				}
+				wait -= 1;
+			}
+
+			if (wait <= 1) {
+				switch (gx) {
+					case 0:
+						this.action_queue.push("right", "left");
+						break;
+					case 1:
+						this.action_queue.push("left");
+						break;
+					case 2:
+						this.action_queue.push("right");
+						break;
+					case 3:
+						this.action_queue.push("left", "right");
+						break;
+				}
+			}
+			else if (wait <= 2) {
+				switch (gx) {
+					case 0:
+						this.action_queue.push("right", "left");
+						break;
+					case 1:
+						this.action_queue.push("right", "right");
+						break;
+					case 2:
+						this.action_queue.push("left", "left");
+						break;
+					case 3:
+						this.action_queue.push("left", "right");
+						break;
+				}
+			}
+			else if (wait <= 3) {
+				switch (gx) {
+					case 0:
+						this.action_queue.push("right", "right", "right");
+						break;
+					case 1:
+						if (Math.random() < 0.5) this.action_queue.push("right", "left", "left");
+						else this.action_queue.push("left", "right", "left");
+						break;
+					case 2:
+						if (Math.random() < 0.5) this.action_queue.push("left", "right", "right");
+						else this.action_queue.push("right", "left", "right");
+						break;
+					case 3:
+						this.action_queue.push("left", "left", "left");
+						break;
+				}
+			}
+			this.action_queue.push("drop");
 		}
-		else {
-			// 33%の確率で帽子を落とす
-			if (Math.random() < 0.33) {
-				this.drop();
-				this.hat_wait = 3;
+		if (this.action_queue.length > 0) {
+			// 行動が決定済み
+			const action = this.action_queue.shift()!;
+			if (action === "left" || action === "right") {
+				this.move(action);
 			}
 			else {
+				this.drop();
+				this.hat_wait = this.getHatWait();
+			}
+		}
+		else {
+			if (this.hat_wait > 0) {
+				// 帽子を落としたばかりなら必ず移動
 				this.move();
+			}
+			else {
+				// 一定の確率で帽子を落とす
+				if (Math.random() < this.getDropPossibility()) {
+					this.drop();
+					this.hat_wait = this.getHatWait();
+				}
+				else {
+					if (Math.random() < 0.85) this.move();
+					else {
+						// 反対側まで移動する
+						switch (this.gridx) {
+							case 0:
+								this.move("right");
+								this.action_queue.push("right", "right");
+								break;
+							case 1:
+								this.move("right");
+								this.action_queue.push("right");
+								break;
+							case 2:
+								this.move("left");
+								this.action_queue.push("left");
+								break;
+							case 3:
+								this.move("left");
+								this.action_queue.push("left", "left");
+								break;
+						}
+					}
+				}
 			}
 		}
 
@@ -247,21 +405,31 @@ export class Fennec extends PIXI.Sprite {
 		this.y = Fennec.spritesheet_position[this.gridx][1];
 	}
 
-	move() {
-		if (this.gridx <= 0) this.gridx = 1;
-		else if (this.gridx >= 3) this.gridx = 2;
-		else {
-			this.gridx += Math.random() < 0.5 ? -1 : 1;
+	move(dir?: "left" | "right") {
+		this.hat_wait -= 1;
+		if (dir === undefined) {
+			if (this.gridx <= 0) this.gridx = 1;
+			else if (this.gridx >= 3) this.gridx = 2;
+			else {
+				this.gridx += Math.random() < 0.5 ? -1 : 1;
+			}
 		}
+		else if (dir === "left") {
+			if (this.gridx > 0) this.gridx -= 1;
+		}
+		else if (this.gridx < 3) this.gridx += 1;
 	}
 
 	drop() {
+		if (this.counter > 0) this.counter -= 1;
 		this.emit("drop", this.gridx);
 	}
 
 	reset() {
 		this.gridx = 2;
 		this.hat_wait = 0;
+		this.action_queue = new Queue<"left" | "right" | "drop">();
+		this.counter = 3;
 		this.updateTexture();
 	}
 }

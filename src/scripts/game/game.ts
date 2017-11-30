@@ -70,9 +70,9 @@ export class Game extends EventEmitter {
 		this.stage.addChild(this.background);
 		this.renderer.render(this.stage);
 
-		this.entity_manager = new EntityManager(this.stage, this.renderer);
 		this.score_manager = new ScoreManager(this.stage, 1, 8);
 		this.miss_manager = new ScoreManager(this.stage, 113, 8);
+		this.entity_manager = new EntityManager(this.stage, this.renderer, this.score_manager);
 		this.effect_manager = new EffectManager(this.stage);
 
 		this.entity_manager.on("catch", (x: number) => {
