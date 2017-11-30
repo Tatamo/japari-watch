@@ -241,6 +241,7 @@ export class Fennec extends PIXI.Sprite {
 	private hat_wait: number;
 	private action_queue: Queue<"left" | "right" | "drop">; // 行動キュー
 	private counter: number; // 行動決定に使用するためのカウンター
+	private difficulty_border_init: number;
 	private difficulty_border: number;
 
 	static initTextures() {
@@ -253,28 +254,31 @@ export class Fennec extends PIXI.Sprite {
 
 	constructor(private game_score: ScoreManager) {
 		super();
-		this.difficulty_border = 150;
+		this.difficulty_border_init = 100;
+		this.difficulty_border = 200;
 		this.reset();
 	}
 
 	getHatWait(): number {
-		// スコア200未満: 3
-		// スコア400未満: 2
-		// スコア400以上: 1
-		if (this.game_score.score < this.difficulty_border) return 3;
-		else if (this.game_score.score < this.difficulty_border * 2) return 2;
+		// スコア300未満: 3
+		// スコア500未満: 2
+		// スコア500以上: 1
+		if (this.game_score.score < this.difficulty_border_init + this.difficulty_border) return 3;
+		else if (this.game_score.score < this.difficulty_border_init + this.difficulty_border * 2) return 2;
 		return 1;
 	}
 	getDropPossibility(): number {
-		let s = this.game_score.score % this.difficulty_border;
-		if (this.game_score.score >= this.difficulty_border * 3) s = this.difficulty_border;
+		let score = this.game_score.score;
+		if (score < this.difficulty_border_init) return 0.33;
+		score -= 100;
+		let s = score % this.difficulty_border;
+		if (score >= this.difficulty_border * 3) s = this.difficulty_border;
 		s /= this.difficulty_border;
 		return 0.33 + 0.33 * s;
 	}
 
 	update() {
 		// 動くか帽子を落とすか決める
-
 		if (this.counter <= 0 && this.action_queue.length === 0) {
 			// 一定回数ぼうしを落としたあとの行動を予め決めておく
 			this.counter = Math.random() < 0.5 ? 3 : 4;
