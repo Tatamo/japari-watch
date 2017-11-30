@@ -10,6 +10,7 @@ export type GameState = "title" | "in-game" | "gameover";
 export class Game extends EventEmitter {
 	state: GameState;
 	high_score: number;
+	high_score_with_ai: number;
 	aimode: boolean;
 	is_score_aimode: boolean;
 	ticker: PIXI.ticker.Ticker;
@@ -26,6 +27,7 @@ export class Game extends EventEmitter {
 		super();
 		this.state = "title";
 		this.high_score = 0;
+		this.high_score_with_ai = 0;
 		this.aimode = false;
 		this.is_score_aimode = false;
 		PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
@@ -77,9 +79,14 @@ export class Game extends EventEmitter {
 
 		this.entity_manager.on("catch", (x: number) => {
 			this.score_manager.addScore();
-			if (!this.is_score_aimode && this.score_manager.score > this.high_score) {
+
+			if (this.is_score_aimode && (this.score_manager.score > this.high_score_with_ai || this.score_manager.score >= 999)) {
+				this.high_score_with_ai = this.score_manager.score;
+				this.emit("high-score", this.high_score_with_ai, true);
+			}
+			if (!this.is_score_aimode && (this.score_manager.score > this.high_score || this.score_manager.score >= 999)) {
 				this.high_score = this.score_manager.score;
-				this.emit("high-score", this.high_score);
+				this.emit("high-score", this.high_score, false);
 			}
 			this.effect_manager.catchHat(x);
 			if ([10, 20, 30, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 999].indexOf(this.score_manager.score) !== -1) {

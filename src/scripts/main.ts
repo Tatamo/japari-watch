@@ -4,16 +4,14 @@ const generateURL = (text: string, url: string, hashtags: string): string => {
 	return `https://twitter.com/intent/tweet?text=${text}&url=${url}&hashtags=${hashtags}`;
 };
 
-const generateTweet = (score: number): string => {
-	const text = `${score}点とったのだ！`;
+const updateHighScore = (score: number, ai:boolean) => {
+	const text = `${score}点とったのだ！${ai?"アライさんにおまかせなのだ！":""}`;
 	const url = "https://tatamo.github.io/japari-watch/";
 	const hashtags = "じゃぱりうぉっち";
-	return generateURL(text, url, hashtags);
-};
+	const tweethref = generateURL(text, url, hashtags);
 
-const updateHighScore = (score: number) => {
 	const a = document.getElementById("tweet-link")!;
-	a.setAttribute("href", generateTweet(score));
+	a.setAttribute("href", tweethref);
 };
 
 window.addEventListener("DOMContentLoaded", () => {
