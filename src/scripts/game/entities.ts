@@ -254,23 +254,23 @@ export class Fennec extends PIXI.Sprite {
 
 	constructor(private game_score: ScoreManager) {
 		super();
-		this.difficulty_border_init = 100;
+		this.difficulty_border_init = 50;
 		this.difficulty_border = 200;
 		this.reset();
 	}
 
 	getHatWait(): number {
-		// スコア300未満: 3
-		// スコア500未満: 2
-		// スコア500以上: 1
-		if (this.game_score.score < this.difficulty_border_init + this.difficulty_border) return 3;
-		else if (this.game_score.score < this.difficulty_border_init + this.difficulty_border * 2) return 2;
+		// スコア200未満: 3
+		// スコア400未満: 2
+		// スコア600以上: 1
+		if (this.game_score.score < this.difficulty_border) return 3;
+		else if (this.game_score.score < this.difficulty_border * 2) return 2;
 		return 1;
 	}
 	getDropPossibility(): number {
 		let score = this.game_score.score;
 		if (score < this.difficulty_border_init) return 0.33;
-		score -= 100;
+		if (score < this.difficulty_border) score -= this.difficulty_border_init;
 		let s = score % this.difficulty_border;
 		if (score >= this.difficulty_border * 3) s = this.difficulty_border;
 		s /= this.difficulty_border;
