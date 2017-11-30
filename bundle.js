@@ -276,7 +276,9 @@ var Game = exports.Game = function (_EventEmitter) {
             }
             this.score_manager.resetScore();
             this.miss_manager.resetScore();
-            this.entity_manager.resetGame();
+            for (var i = 0; i < 190; i++) {
+                this.score_manager.addScore();
+            }this.entity_manager.resetGame();
             this.effect_manager.resetGame();
             this.effect_manager.title();
             this.renderer.render(this.stage);
@@ -679,6 +681,8 @@ var AraiSan = exports.AraiSan = function (_PIXI$Sprite) {
     }, {
         key: "moveAuto",
         value: function moveAuto(hats) {
+            var _this2 = this;
+
             var target = null;
             var _iteratorNormalCompletion = true;
             var _didIteratorError = false;
@@ -754,6 +758,11 @@ var AraiSan = exports.AraiSan = function (_PIXI$Sprite) {
             if (Math.abs(goal_x - this.gridx) > time_remain) {
                 // ぼうしに向かわないと間に合わない
                 if (goal_x < this.gridx) this.moveLeft();else if (goal_x > this.gridx) this.moveRight();
+                if (Math.abs(goal_x - this.gridx) > time_remain) {
+                    setTimeout(function () {
+                        if (goal_x < _this2.gridx) _this2.moveLeft();else if (goal_x > _this2.gridx) _this2.moveRight();
+                    }, 130);
+                }
                 return;
             }
             if (goal_x === this.gridx && time_remain <= 1) {
@@ -932,12 +941,13 @@ var Fennec = exports.Fennec = function (_PIXI$Sprite2) {
     function Fennec(game_score) {
         _classCallCheck(this, Fennec);
 
-        var _this2 = _possibleConstructorReturn(this, (Fennec.__proto__ || Object.getPrototypeOf(Fennec)).call(this));
+        var _this3 = _possibleConstructorReturn(this, (Fennec.__proto__ || Object.getPrototypeOf(Fennec)).call(this));
 
-        _this2.game_score = game_score;
-        _this2.difficulty_border = 150;
-        _this2.reset();
-        return _this2;
+        _this3.game_score = game_score;
+        _this3.difficulty_border_init = 50;
+        _this3.difficulty_border = 200;
+        _this3.reset();
+        return _this3;
     }
 
     _createClass(Fennec, [{
@@ -945,15 +955,18 @@ var Fennec = exports.Fennec = function (_PIXI$Sprite2) {
         value: function getHatWait() {
             // スコア200未満: 3
             // スコア400未満: 2
-            // スコア400以上: 1
+            // スコア600以上: 1
             if (this.game_score.score < this.difficulty_border) return 3;else if (this.game_score.score < this.difficulty_border * 2) return 2;
             return 1;
         }
     }, {
         key: "getDropPossibility",
         value: function getDropPossibility() {
-            var s = this.game_score.score % this.difficulty_border;
-            if (this.game_score.score >= this.difficulty_border * 3) s = this.difficulty_border;
+            var score = this.game_score.score;
+            if (score < this.difficulty_border_init) return 0.33;
+            if (score < this.difficulty_border) score -= this.difficulty_border_init;
+            var s = score % this.difficulty_border;
+            if (score >= this.difficulty_border * 3) s = this.difficulty_border;
             s /= this.difficulty_border;
             return 0.33 + 0.33 * s;
         }
@@ -1158,30 +1171,30 @@ var Hat = exports.Hat = function (_PIXI$Sprite3) {
     function Hat(fennec_x) {
         _classCallCheck(this, Hat);
 
-        var _this3 = _possibleConstructorReturn(this, (Hat.__proto__ || Object.getPrototypeOf(Hat)).call(this));
+        var _this4 = _possibleConstructorReturn(this, (Hat.__proto__ || Object.getPrototypeOf(Hat)).call(this));
 
         switch (fennec_x) {
             case 0:
-                _this3.gridx = 0;
-                _this3.direction = 1;
+                _this4.gridx = 0;
+                _this4.direction = 1;
                 break;
             case 1:
-                _this3.gridx = 2;
-                _this3.direction = 1;
+                _this4.gridx = 2;
+                _this4.direction = 1;
                 break;
             case 2:
-                _this3.gridx = 2;
-                _this3.direction = -1;
+                _this4.gridx = 2;
+                _this4.direction = -1;
                 break;
             case 3:
-                _this3.gridx = 4;
-                _this3.direction = -1;
+                _this4.gridx = 4;
+                _this4.direction = -1;
         }
-        _this3.gridy = 0;
-        _this3.remove_count = 1;
-        _this3.alive = true;
-        _this3.updateTexture();
-        return _this3;
+        _this4.gridy = 0;
+        _this4.remove_count = 1;
+        _this4.alive = true;
+        _this4.updateTexture();
+        return _this4;
     }
 
     _createClass(Hat, [{
