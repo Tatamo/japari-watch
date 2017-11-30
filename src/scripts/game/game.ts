@@ -127,7 +127,6 @@ export class Game extends EventEmitter {
 		});
 
 		this.score_manager.resetScore();
-		for (let i = 0; i < 450; i++) this.score_manager.addScore();
 		this.miss_manager.resetScore();
 		this.effect_manager.title();
 
