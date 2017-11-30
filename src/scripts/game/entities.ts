@@ -241,6 +241,7 @@ export class Fennec extends PIXI.Sprite {
 	private hat_wait: number;
 	private action_queue: Queue<"left" | "right" | "drop">; // 行動キュー
 	private counter: number; // 行動決定に使用するためのカウンター
+	private difficulty_border: number;
 
 	static initTextures() {
 		if (this.is_initialized) return;
@@ -252,21 +253,22 @@ export class Fennec extends PIXI.Sprite {
 
 	constructor(private game_score: ScoreManager) {
 		super();
+		this.difficulty_border = 150;
 		this.reset();
 	}
 
 	getHatWait(): number {
-		// スコア300未満: 3
-		// スコア600未満: 2
-		// スコア600以上: 1
-		if (this.game_score.score < 300) return 3;
-		else if (this.game_score.score < 600) return 2;
+		// スコア200未満: 3
+		// スコア400未満: 2
+		// スコア400以上: 1
+		if (this.game_score.score < this.difficulty_border) return 3;
+		else if (this.game_score.score < this.difficulty_border * 2) return 2;
 		return 1;
 	}
 	getDropPossibility(): number {
-		let s = this.game_score.score % 300;
-		if (this.game_score.score >= 900) s = 300;
-		s /= 300.0;
+		let s = this.game_score.score % this.difficulty_border;
+		if (this.game_score.score >= this.difficulty_border * 3) s = this.difficulty_border;
+		s /= this.difficulty_border;
 		return 0.33 + 0.33 * s;
 	}
 
@@ -275,7 +277,7 @@ export class Fennec extends PIXI.Sprite {
 
 		if (this.counter <= 0 && this.action_queue.length === 0) {
 			// 一定回数ぼうしを落としたあとの行動を予め決めておく
-			this.counter = Math.random() < 0.5 ? 3 : 3;
+			this.counter = Math.random() < 0.5 ? 3 : 4;
 
 			const rand = Math.random();
 			let wait = this.getHatWait() + (rand < 0.4 ? 0 : 1) + (rand < 0.8 ? 0 : 1); // +0:+1:+2 = 4:4:2
@@ -369,7 +371,7 @@ export class Fennec extends PIXI.Sprite {
 					this.hat_wait = this.getHatWait();
 				}
 				else {
-					if (Math.random() < 0.85) this.move();
+					if (Math.random() < 0.9) this.move();
 					else {
 						// 反対側まで移動する
 						switch (this.gridx) {
