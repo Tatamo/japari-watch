@@ -160,7 +160,6 @@ export class Game extends EventEmitter {
 		}
 		this.score_manager.resetScore();
 		this.miss_manager.resetScore();
-		for (let i = 0; i < 190; i++) this.score_manager.addScore();
 		this.entity_manager.resetGame();
 		this.effect_manager.resetGame();
 		this.effect_manager.title();
