@@ -81,18 +81,25 @@ var _game = __webpack_require__(2);
 var generateURL = function generateURL(text, url, hashtags) {
     return "https://twitter.com/intent/tweet?text=" + text + "&url=" + url + "&hashtags=" + hashtags;
 };
-var generateTweet = function generateTweet(score) {
-    var text = score + "\u70B9\u3068\u3063\u305F\u306E\u3060\uFF01";
+var updateHighScore = function updateHighScore(score, ai) {
+    var text = score + "\u70B9\u3068\u3063\u305F\u306E\u3060\uFF01" + (ai ? "アライさんにおまかせなのだ！" : "");
     var url = "https://tatamo.github.io/japari-watch/";
     var hashtags = "じゃぱりうぉっち";
-    return generateURL(text, url, hashtags);
-};
-var updateHighScore = function updateHighScore(score) {
+    var tweethref = generateURL(text, url, hashtags);
     var a = document.getElementById("tweet-link");
-    a.setAttribute("href", generateTweet(score));
+    a.setAttribute("href", tweethref);
 };
 window.addEventListener("DOMContentLoaded", function () {
-    return new _game.Game(document.getElementById("game")).on("high-score", updateHighScore);
+    var game = new _game.Game(document.getElementById("game"));
+    game.on("high-score", updateHighScore);
+    var a = document.getElementById("toggle-ai-mode");
+    var mode_view = document.getElementById("view-ai-mode");
+    mode_view.innerText = game.isAIMode() ? "オン" : "オフ";
+    a.onclick = function () {
+        game.toggleAIMode();
+        mode_view.innerText = game.isAIMode() ? "オン" : "オフ";
+        return false;
+    };
 });
 
 /***/ }),
@@ -141,12 +148,15 @@ var Game = exports.Game = function (_EventEmitter) {
 
         _this.state = "title";
         _this.high_score = 0;
+        _this.high_score_with_ai = 0;
+        _this.aimode = false;
+        _this.is_score_aimode = false;
         PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
         _this.ticker = new PIXI.ticker.Ticker();
         _this.ticker.speed = 1 / 60;
         _this.ticker.add(function () {
             var tick_interval = 0.3;
-            var tick_count = -1.5; // 最初のupdateだけ時間をかける (スプライト全表示を見せるため)
+            var tick_count = -0.9; // 最初のupdateだけ時間をかける (スプライト全表示を見せるため)
             return function (delta) {
                 tick_count += delta;
                 if (tick_count < tick_interval) return;
@@ -158,7 +168,7 @@ var Game = exports.Game = function (_EventEmitter) {
         parent.appendChild(_this.renderer.view);
         _this.stage = new PIXI.Container();
         _this.stage.scale.x = _this.stage.scale.y = 4.0;
-        _this.input = new _input.InputController();
+        _this.input = new _input.InputController(_this.stage);
         _this.loadAssets();
         return _this;
     }
@@ -185,18 +195,22 @@ var Game = exports.Game = function (_EventEmitter) {
             this.background = new PIXI.Sprite(PIXI.loader.resources["background"].texture);
             this.stage.addChild(this.background);
             this.renderer.render(this.stage);
-            this.entity_manager = new _entitymanager.EntityManager(this.stage, this.renderer);
             this.score_manager = new _score.ScoreManager(this.stage, 1, 8);
             this.miss_manager = new _score.ScoreManager(this.stage, 113, 8);
+            this.entity_manager = new _entitymanager.EntityManager(this.stage, this.renderer, this.score_manager);
             this.effect_manager = new _effects.EffectManager(this.stage);
             this.entity_manager.on("catch", function (x) {
                 _this2.score_manager.addScore();
-                if (_this2.score_manager.score > _this2.high_score) {
+                if (_this2.is_score_aimode && (_this2.score_manager.score > _this2.high_score_with_ai || _this2.score_manager.score >= 999)) {
+                    _this2.high_score_with_ai = _this2.score_manager.score;
+                    _this2.emit("high-score", _this2.high_score_with_ai, true);
+                }
+                if (!_this2.is_score_aimode && (_this2.score_manager.score > _this2.high_score || _this2.score_manager.score >= 999)) {
                     _this2.high_score = _this2.score_manager.score;
-                    _this2.emit("high-score", _this2.high_score);
+                    _this2.emit("high-score", _this2.high_score, false);
                 }
                 _this2.effect_manager.catchHat(x);
-                if ([10, 20, 30, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 999].indexOf(_this2.score_manager.score) !== -1) {
+                if ([10, 20, 30, 50, 100, 150, 200, 300, 400, 500, 600, 700, 800, 900, 999].indexOf(_this2.score_manager.score) !== -1) {
                     // 高スコアを達成するとフェネックがほめてくれるのだ
                     _this2.effect_manager.getCoolScore();
                 }
@@ -210,63 +224,22 @@ var Game = exports.Game = function (_EventEmitter) {
                 _this2.effect_manager.miss(x);
                 if (_this2.miss_manager.score >= 3) {
                     _this2.state = "gameover";
-                    _this2.emit("gameover", _this2.score_manager.score);
                     _this2.entity_manager.resetGame();
                     _this2.effect_manager.gameOver();
                 }
             });
-            var startGame = function startGame() {
-                _this2.state = "in-game";
-                _this2.effect_manager.startGame();
-                _this2.emit("start");
-            };
-            var getInput = function getInput(key) {
-                if (_this2.state === "title") {
-                    startGame();
-                } else if (_this2.state === "in-game") {
-                    switch (key) {
-                        case "left":
-                            _this2.entity_manager.player.moveLeft();
-                            break;
-                        case "right":
-                            _this2.entity_manager.player.moveRight();
-                            break;
-                        case "reset":
-                            _this2.resetGame();
-                            break;
-                    }
-                }
-            };
-            this.input.on("keydown", function (key) {
-                if (key === 37) getInput("left");else if (key === 39) getInput("right");else if (key === 84) getInput("reset");
-            });
             this.effect_manager.on("return-to-title", function () {
                 _this2.resetGame();
             });
-            var left_button = new PIXI.Sprite(PIXI.Texture.EMPTY);
-            this.stage.addChild(left_button);
-            left_button.x = left_button.y = 0;
-            left_button.height = 128;
-            left_button.width = 64;
-            left_button.interactive = true;
-            left_button.on("click", function () {
-                return getInput("left");
+            // user input
+            this.input.on("left", function () {
+                if (_this2.state === "title") _this2.startGame();else if (!_this2.aimode && _this2.state === "in-game") _this2.entity_manager.player.moveLeft();
             });
-            left_button.on("touchstart", function () {
-                return getInput("left");
+            this.input.on("right", function () {
+                if (_this2.state === "title") _this2.startGame();else if (!_this2.aimode && _this2.state === "in-game") _this2.entity_manager.player.moveRight();
             });
-            var right_button = new PIXI.Sprite(PIXI.Texture.EMPTY);
-            this.stage.addChild(right_button);
-            right_button.x = 64;
-            right_button.y = 0;
-            right_button.height = 128;
-            right_button.width = 64;
-            right_button.interactive = true;
-            right_button.on("click", function () {
-                return getInput("right");
-            });
-            right_button.on("touchstart", function () {
-                return getInput("right");
+            this.input.on("reset", function () {
+                if (_this2.state === "in-game") _this2.resetGame();
             });
             this.score_manager.resetScore();
             this.miss_manager.resetScore();
@@ -287,16 +260,45 @@ var Game = exports.Game = function (_EventEmitter) {
             this.renderer.render(this.stage);
         }
     }, {
+        key: "startGame",
+        value: function startGame() {
+            this.state = "in-game";
+            this.effect_manager.startGame();
+            if (this.aimode) this.effect_manager.enterAIMode();
+        }
+    }, {
         key: "resetGame",
         value: function resetGame() {
             this.state = "title";
+            // AIモードのハイスコア制限を解除
+            if (!this.aimode) {
+                this.is_score_aimode = false;
+            }
             this.score_manager.resetScore();
             this.miss_manager.resetScore();
             this.entity_manager.resetGame();
             this.effect_manager.resetGame();
             this.effect_manager.title();
-            this.emit("title");
             this.renderer.render(this.stage);
+        }
+    }, {
+        key: "isAIMode",
+        value: function isAIMode() {
+            return this.aimode;
+        }
+    }, {
+        key: "toggleAIMode",
+        value: function toggleAIMode() {
+            this.aimode = !this.aimode;
+            if (this.aimode) {
+                this.is_score_aimode = true;
+            }
+            this.entity_manager.player.setAIMode(this.aimode);
+            if (this.aimode) {
+                if (this.state === "in-game") {
+                    this.effect_manager.enterAIMode();
+                }
+            }
         }
     }]);
 
@@ -456,13 +458,13 @@ var EventEmitter = PIXI.utils.EventEmitter;
 var EntityManager = exports.EntityManager = function (_EventEmitter) {
     _inherits(EntityManager, _EventEmitter);
 
-    function EntityManager(stage, renderer) {
+    function EntityManager(stage, renderer, score) {
         _classCallCheck(this, EntityManager);
 
         var _this = _possibleConstructorReturn(this, (EntityManager.__proto__ || Object.getPrototypeOf(EntityManager)).call(this));
 
         _this.stage = stage;
-        _this.init(renderer);
+        _this.init(renderer, score);
         return _this;
     }
 
@@ -481,7 +483,7 @@ var EntityManager = exports.EntityManager = function (_EventEmitter) {
         }
     }, {
         key: "init",
-        value: function init(renderer) {
+        value: function init(renderer, score) {
             var _this3 = this;
 
             // init entities
@@ -489,7 +491,7 @@ var EntityManager = exports.EntityManager = function (_EventEmitter) {
             this.arai_san = new _entities.AraiSan();
             this.stage.addChild(this.arai_san);
             _entities.Fennec.initTextures();
-            this.fennec = new _entities.Fennec();
+            this.fennec = new _entities.Fennec(score);
             this.stage.addChild(this.fennec);
             _entities.Hat.initTextures();
             this.hats = new PIXI.Container();
@@ -497,6 +499,9 @@ var EntityManager = exports.EntityManager = function (_EventEmitter) {
             // set callbacks
             this.arai_san.on("check-catch", function () {
                 return _this3.arai_san.checkCatch(_this3.hats);
+            }); // hatsの参照を流し込む
+            this.arai_san.on("move-auto", function () {
+                return _this3.arai_san.moveAuto(_this3.hats);
             }); // hatsの参照を流し込む
             this.arai_san.on("catch", function (hat) {
                 // x: アライさんの位置
@@ -631,6 +636,7 @@ var AraiSan = exports.AraiSan = function (_PIXI$Sprite) {
 
         var _this = _possibleConstructorReturn(this, (AraiSan.__proto__ || Object.getPrototypeOf(AraiSan)).call(this));
 
+        _this.aimode = false;
         _this.reset();
         return _this;
     }
@@ -641,8 +647,19 @@ var AraiSan = exports.AraiSan = function (_PIXI$Sprite) {
             return this.gridx;
         }
     }, {
+        key: "getAIMode",
+        value: function getAIMode() {
+            return this.aimode;
+        }
+    }, {
+        key: "setAIMode",
+        value: function setAIMode(mode) {
+            this.aimode = mode;
+        }
+    }, {
         key: "update",
         value: function update() {
+            if (this.aimode) this.emit("move-auto");
             this.updateTexture();
             this.emit("update");
         }
@@ -658,6 +675,115 @@ var AraiSan = exports.AraiSan = function (_PIXI$Sprite) {
         value: function reset() {
             this.gridx = 1;
             this.updateTexture();
+        }
+    }, {
+        key: "moveAuto",
+        value: function moveAuto(hats) {
+            var target = null;
+            var _iteratorNormalCompletion = true;
+            var _didIteratorError = false;
+            var _iteratorError = undefined;
+
+            try {
+                for (var _iterator = hats.children[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                    var hat = _step.value;
+
+                    if (!hat.isAlive() || hat.isCaught() || hat.getGridY() > 10) continue;
+                    if (target === null) target = hat;else if (hat.getGridY() > target.getGridY()) {
+                        target = hat;
+                    }
+                }
+            } catch (err) {
+                _didIteratorError = true;
+                _iteratorError = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion && _iterator.return) {
+                        _iterator.return();
+                    }
+                } finally {
+                    if (_didIteratorError) {
+                        throw _iteratorError;
+                    }
+                }
+            }
+
+            if (target === null) {
+                // move random
+                var _rand = Math.random();
+                if (_rand < 0.4) this.moveLeft();else if (_rand < 0.8) this.moveRight();
+                return;
+            }
+            // 帽子の落下予測位置とそれまでの時間を予測
+            var hx = target.getGridX();
+            var hy = target.getGridY();
+            var dir = target.getDirection();
+            var goal_x = -1;
+            var time_remain = 0;
+            while (hy < 10) {
+                if (hy === 9 && hx === 0) {
+                    goal_x = 0;
+                    break;
+                } else if (hy === 8 && hx === 2) {
+                    goal_x = 1;
+                    break;
+                } else if (hy === 9 && hx === 4) {
+                    goal_x = 2;
+                    break;
+                }
+                if (hy < 8) {
+                    // 斜めに落ちていく
+                    hx += dir;
+                    if (dir === 1 && hx >= 4 || dir === -1 && hx <= 0) {
+                        dir *= -1;
+                    }
+                    hy += 1;
+                } else if (hy === 8) {
+                    if (hx === 2) {
+                        // center
+                        hx += dir;
+                        hy += 2;
+                    } else {
+                        hy += 1;
+                    }
+                } else if (hy === 9) {
+                    hy += 1;
+                }
+                time_remain += 1;
+            }
+            if (Math.abs(goal_x - this.gridx) > time_remain) {
+                // ぼうしに向かわないと間に合わない
+                if (goal_x < this.gridx) this.moveLeft();else if (goal_x > this.gridx) this.moveRight();
+                return;
+            }
+            if (goal_x === this.gridx && time_remain <= 1) {
+                // 動くと間に合わなくなる
+                return;
+            }
+            // 一番近いぼうしに寄せるような動きをする
+            // x: アライさんの望ましい位置
+            var x = void 0;
+            if (target.getDirection() === -1) {
+                if (target.getGridX() <= 1) x = 0;else if (target.getGridX() <= 3) x = 1;else x = 2;
+            } else {
+                if (target.getGridX() <= 0) x = 0;else if (target.getGridX() <= 2) x = 1;else x = 2;
+            }
+            if (Math.random() < 0.85) {
+                if (x < this.gridx) {
+                    this.moveLeft();
+                    return;
+                } else if (x > this.gridx) {
+                    this.moveRight();
+                    return;
+                }
+            }
+            // move random
+            var rand = Math.random();
+            if (this.gridx === 1) {
+                if (rand < 0.33) this.moveLeft();else if (rand < 0.66) this.moveRight();
+            } else {
+                if (rand < 0.5) this.moveLeft();else this.moveRight();
+            }
         }
     }, {
         key: "moveLeft",
@@ -680,13 +806,13 @@ var AraiSan = exports.AraiSan = function (_PIXI$Sprite) {
     }, {
         key: "checkCatch",
         value: function checkCatch(hats) {
-            var _iteratorNormalCompletion = true;
-            var _didIteratorError = false;
-            var _iteratorError = undefined;
+            var _iteratorNormalCompletion2 = true;
+            var _didIteratorError2 = false;
+            var _iteratorError2 = undefined;
 
             try {
-                for (var _iterator = hats.children[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                    var hat = _step.value;
+                for (var _iterator2 = hats.children[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+                    var hat = _step2.value;
 
                     if (!(hat instanceof Hat)) continue;
                     var hx = hat.getGridX();
@@ -696,35 +822,6 @@ var AraiSan = exports.AraiSan = function (_PIXI$Sprite) {
                             this.emit("catch", hat);
                         }
                     }
-                }
-            } catch (err) {
-                _didIteratorError = true;
-                _iteratorError = err;
-            } finally {
-                try {
-                    if (!_iteratorNormalCompletion && _iterator.return) {
-                        _iterator.return();
-                    }
-                } finally {
-                    if (_didIteratorError) {
-                        throw _iteratorError;
-                    }
-                }
-            }
-        }
-    }], [{
-        key: "initTextures",
-        value: function initTextures() {
-            if (this.is_initialized) return;
-            var _iteratorNormalCompletion2 = true;
-            var _didIteratorError2 = false;
-            var _iteratorError2 = undefined;
-
-            try {
-                for (var _iterator2 = this.spritesheet_position[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-                    var pos = _step2.value;
-
-                    this.textures.push(new PIXI.Texture(PIXI.loader.resources["arai_san"].texture.baseTexture, new (Function.prototype.bind.apply(PIXI.Rectangle, [null].concat(_toConsumableArray(pos))))()));
                 }
             } catch (err) {
                 _didIteratorError2 = true;
@@ -740,6 +837,35 @@ var AraiSan = exports.AraiSan = function (_PIXI$Sprite) {
                     }
                 }
             }
+        }
+    }], [{
+        key: "initTextures",
+        value: function initTextures() {
+            if (this.is_initialized) return;
+            var _iteratorNormalCompletion3 = true;
+            var _didIteratorError3 = false;
+            var _iteratorError3 = undefined;
+
+            try {
+                for (var _iterator3 = this.spritesheet_position[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+                    var pos = _step3.value;
+
+                    this.textures.push(new PIXI.Texture(PIXI.loader.resources["arai_san"].texture.baseTexture, new (Function.prototype.bind.apply(PIXI.Rectangle, [null].concat(_toConsumableArray(pos))))()));
+                }
+            } catch (err) {
+                _didIteratorError3 = true;
+                _iteratorError3 = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion3 && _iterator3.return) {
+                        _iterator3.return();
+                    }
+                } finally {
+                    if (_didIteratorError3) {
+                        throw _iteratorError3;
+                    }
+                }
+            }
 
             this.is_initialized = true;
         }
@@ -751,38 +877,196 @@ var AraiSan = exports.AraiSan = function (_PIXI$Sprite) {
 AraiSan.spritesheet_position = [[16, 97, 24, 30], [51, 97, 27, 30], [88, 97, 24, 30]];
 AraiSan.textures = [];
 AraiSan.is_initialized = false;
+
+var Queue = function () {
+    function Queue(iterable) {
+        _classCallCheck(this, Queue);
+
+        this._in = iterable === undefined ? [] : [].concat(_toConsumableArray(iterable));
+        this._out = [];
+    }
+
+    _createClass(Queue, [{
+        key: "_fix",
+        value: function _fix() {
+            this._out = this._in.reverse().concat(this._out);
+            this._in = [];
+        }
+    }, {
+        key: "push",
+        value: function push() {
+            var _in;
+
+            (_in = this._in).push.apply(_in, arguments);
+        }
+    }, {
+        key: "shift",
+        value: function shift() {
+            if (this._out.length == 0) this._fix();
+            return this._out.pop();
+        }
+    }, {
+        key: "toArray",
+        value: function toArray() {
+            this._fix();
+            return this._out.slice().reverse();
+        }
+    }, {
+        key: "length",
+        get: function get() {
+            return this._in.length + this._out.length;
+        }
+    }]);
+
+    return Queue;
+}();
 /*
 フェネック
 gridx: 左の列から順に[0,3]
  */
 
+
 var Fennec = exports.Fennec = function (_PIXI$Sprite2) {
     _inherits(Fennec, _PIXI$Sprite2);
 
-    function Fennec() {
+    function Fennec(game_score) {
         _classCallCheck(this, Fennec);
 
         var _this2 = _possibleConstructorReturn(this, (Fennec.__proto__ || Object.getPrototypeOf(Fennec)).call(this));
 
+        _this2.game_score = game_score;
+        _this2.difficulty_border = 150;
         _this2.reset();
         return _this2;
     }
 
     _createClass(Fennec, [{
+        key: "getHatWait",
+        value: function getHatWait() {
+            // スコア200未満: 3
+            // スコア400未満: 2
+            // スコア400以上: 1
+            if (this.game_score.score < this.difficulty_border) return 3;else if (this.game_score.score < this.difficulty_border * 2) return 2;
+            return 1;
+        }
+    }, {
+        key: "getDropPossibility",
+        value: function getDropPossibility() {
+            var s = this.game_score.score % this.difficulty_border;
+            if (this.game_score.score >= this.difficulty_border * 3) s = this.difficulty_border;
+            s /= this.difficulty_border;
+            return 0.33 + 0.33 * s;
+        }
+    }, {
         key: "update",
         value: function update() {
             // 動くか帽子を落とすか決める
-            if (this.hat_wait > 0) {
-                // 帽子を落としたばかりなら必ず移動
-                this.hat_wait -= 1;
-                this.move();
-            } else {
-                // 33%の確率で帽子を落とす
-                if (Math.random() < 0.33) {
-                    this.drop();
-                    this.hat_wait = 3;
+            if (this.counter <= 0 && this.action_queue.length === 0) {
+                // 一定回数ぼうしを落としたあとの行動を予め決めておく
+                this.counter = Math.random() < 0.5 ? 3 : 4;
+                var rand = Math.random();
+                var wait = this.getHatWait() + (rand < 0.4 ? 0 : 1) + (rand < 0.8 ? 0 : 1); // +0:+1:+2 = 4:4:2
+                var gx = this.gridx;
+                // 基本的にはむりやり端まで移動して落とさせる
+                while (wait > 3) {
+                    if (gx === 0 || gx <= 2 && Math.random() < 0.5) {
+                        this.action_queue.push("right");
+                        gx += 1;
+                    } else {
+                        this.action_queue.push("left");
+                        gx -= 1;
+                    }
+                    wait -= 1;
+                }
+                if (wait <= 1) {
+                    switch (gx) {
+                        case 0:
+                            this.action_queue.push("right", "left");
+                            break;
+                        case 1:
+                            this.action_queue.push("left");
+                            break;
+                        case 2:
+                            this.action_queue.push("right");
+                            break;
+                        case 3:
+                            this.action_queue.push("left", "right");
+                            break;
+                    }
+                } else if (wait <= 2) {
+                    switch (gx) {
+                        case 0:
+                            this.action_queue.push("right", "left");
+                            break;
+                        case 1:
+                            this.action_queue.push("right", "right");
+                            break;
+                        case 2:
+                            this.action_queue.push("left", "left");
+                            break;
+                        case 3:
+                            this.action_queue.push("left", "right");
+                            break;
+                    }
+                } else if (wait <= 3) {
+                    switch (gx) {
+                        case 0:
+                            this.action_queue.push("right", "right", "right");
+                            break;
+                        case 1:
+                            if (Math.random() < 0.5) this.action_queue.push("right", "left", "left");else this.action_queue.push("left", "right", "left");
+                            break;
+                        case 2:
+                            if (Math.random() < 0.5) this.action_queue.push("left", "right", "right");else this.action_queue.push("right", "left", "right");
+                            break;
+                        case 3:
+                            this.action_queue.push("left", "left", "left");
+                            break;
+                    }
+                }
+                this.action_queue.push("drop");
+            }
+            if (this.action_queue.length > 0) {
+                // 行動が決定済み
+                var action = this.action_queue.shift();
+                if (action === "left" || action === "right") {
+                    this.move(action);
                 } else {
+                    this.drop();
+                    this.hat_wait = this.getHatWait();
+                }
+            } else {
+                if (this.hat_wait > 0) {
+                    // 帽子を落としたばかりなら必ず移動
                     this.move();
+                } else {
+                    // 一定の確率で帽子を落とす
+                    if (Math.random() < this.getDropPossibility()) {
+                        this.drop();
+                        this.hat_wait = this.getHatWait();
+                    } else {
+                        if (Math.random() < 0.9) this.move();else {
+                            // 反対側まで移動する
+                            switch (this.gridx) {
+                                case 0:
+                                    this.move("right");
+                                    this.action_queue.push("right", "right");
+                                    break;
+                                case 1:
+                                    this.move("right");
+                                    this.action_queue.push("right");
+                                    break;
+                                case 2:
+                                    this.move("left");
+                                    this.action_queue.push("left");
+                                    break;
+                                case 3:
+                                    this.move("left");
+                                    this.action_queue.push("left", "left");
+                                    break;
+                            }
+                        }
+                    }
                 }
             }
             this.updateTexture();
@@ -797,14 +1081,20 @@ var Fennec = exports.Fennec = function (_PIXI$Sprite2) {
         }
     }, {
         key: "move",
-        value: function move() {
-            if (this.gridx <= 0) this.gridx = 1;else if (this.gridx >= 3) this.gridx = 2;else {
-                this.gridx += Math.random() < 0.5 ? -1 : 1;
-            }
+        value: function move(dir) {
+            this.hat_wait -= 1;
+            if (dir === undefined) {
+                if (this.gridx <= 0) this.gridx = 1;else if (this.gridx >= 3) this.gridx = 2;else {
+                    this.gridx += Math.random() < 0.5 ? -1 : 1;
+                }
+            } else if (dir === "left") {
+                if (this.gridx > 0) this.gridx -= 1;
+            } else if (this.gridx < 3) this.gridx += 1;
         }
     }, {
         key: "drop",
         value: function drop() {
+            if (this.counter > 0) this.counter -= 1;
             this.emit("drop", this.gridx);
         }
     }, {
@@ -812,33 +1102,35 @@ var Fennec = exports.Fennec = function (_PIXI$Sprite2) {
         value: function reset() {
             this.gridx = 2;
             this.hat_wait = 0;
+            this.action_queue = new Queue();
+            this.counter = 3;
             this.updateTexture();
         }
     }], [{
         key: "initTextures",
         value: function initTextures() {
             if (this.is_initialized) return;
-            var _iteratorNormalCompletion3 = true;
-            var _didIteratorError3 = false;
-            var _iteratorError3 = undefined;
+            var _iteratorNormalCompletion4 = true;
+            var _didIteratorError4 = false;
+            var _iteratorError4 = undefined;
 
             try {
-                for (var _iterator3 = this.spritesheet_position[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-                    var pos = _step3.value;
+                for (var _iterator4 = this.spritesheet_position[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+                    var pos = _step4.value;
 
                     this.textures.push(new PIXI.Texture(PIXI.loader.resources["fennec"].texture.baseTexture, new (Function.prototype.bind.apply(PIXI.Rectangle, [null].concat(_toConsumableArray(pos))))()));
                 }
             } catch (err) {
-                _didIteratorError3 = true;
-                _iteratorError3 = err;
+                _didIteratorError4 = true;
+                _iteratorError4 = err;
             } finally {
                 try {
-                    if (!_iteratorNormalCompletion3 && _iterator3.return) {
-                        _iterator3.return();
+                    if (!_iteratorNormalCompletion4 && _iterator4.return) {
+                        _iterator4.return();
                     }
                 } finally {
-                    if (_didIteratorError3) {
-                        throw _iteratorError3;
+                    if (_didIteratorError4) {
+                        throw _iteratorError4;
                     }
                 }
             }
@@ -903,6 +1195,11 @@ var Hat = exports.Hat = function (_PIXI$Sprite3) {
             return this.gridy;
         }
     }, {
+        key: "getDirection",
+        value: function getDirection() {
+            return this.direction;
+        }
+    }, {
         key: "isAlive",
         value: function isAlive() {
             return this.alive;
@@ -964,51 +1261,51 @@ var Hat = exports.Hat = function (_PIXI$Sprite3) {
         key: "initTextures",
         value: function initTextures() {
             if (this.is_initialized) return;
-            var _iteratorNormalCompletion4 = true;
-            var _didIteratorError4 = false;
-            var _iteratorError4 = undefined;
+            var _iteratorNormalCompletion5 = true;
+            var _didIteratorError5 = false;
+            var _iteratorError5 = undefined;
 
             try {
-                for (var _iterator4 = this.spritesheet_position[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-                    var line = _step4.value;
+                for (var _iterator5 = this.spritesheet_position[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+                    var line = _step5.value;
 
                     this.textures.push([]);
-                    var _iteratorNormalCompletion5 = true;
-                    var _didIteratorError5 = false;
-                    var _iteratorError5 = undefined;
+                    var _iteratorNormalCompletion6 = true;
+                    var _didIteratorError6 = false;
+                    var _iteratorError6 = undefined;
 
                     try {
-                        for (var _iterator5 = line[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-                            var pos = _step5.value;
+                        for (var _iterator6 = line[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+                            var pos = _step6.value;
 
                             if (pos === null) this.textures[this.textures.length - 1].push(null);else this.textures[this.textures.length - 1].push(new PIXI.Texture(PIXI.loader.resources["hats"].texture.baseTexture, new (Function.prototype.bind.apply(PIXI.Rectangle, [null].concat(_toConsumableArray(pos))))()));
                         }
                     } catch (err) {
-                        _didIteratorError5 = true;
-                        _iteratorError5 = err;
+                        _didIteratorError6 = true;
+                        _iteratorError6 = err;
                     } finally {
                         try {
-                            if (!_iteratorNormalCompletion5 && _iterator5.return) {
-                                _iterator5.return();
+                            if (!_iteratorNormalCompletion6 && _iterator6.return) {
+                                _iterator6.return();
                             }
                         } finally {
-                            if (_didIteratorError5) {
-                                throw _iteratorError5;
+                            if (_didIteratorError6) {
+                                throw _iteratorError6;
                             }
                         }
                     }
                 }
             } catch (err) {
-                _didIteratorError4 = true;
-                _iteratorError4 = err;
+                _didIteratorError5 = true;
+                _iteratorError5 = err;
             } finally {
                 try {
-                    if (!_iteratorNormalCompletion4 && _iterator4.return) {
-                        _iterator4.return();
+                    if (!_iteratorNormalCompletion5 && _iterator5.return) {
+                        _iterator5.return();
                     }
                 } finally {
-                    if (_didIteratorError4) {
-                        throw _iteratorError4;
+                    if (_didIteratorError5) {
+                        throw _iteratorError5;
                     }
                 }
             }
@@ -1053,37 +1350,53 @@ var EventEmitter = PIXI.utils.EventEmitter;
 var InputController = exports.InputController = function (_EventEmitter) {
     _inherits(InputController, _EventEmitter);
 
-    function InputController() {
+    function InputController(stage) {
         _classCallCheck(this, InputController);
 
+        // key event
         var _this = _possibleConstructorReturn(this, (InputController.__proto__ || Object.getPrototypeOf(InputController)).call(this));
 
-        _this.is_pressed_left = false;
-        _this.is_pressed_right = false;
         _this.keycode_left = 37;
         _this.keycode_right = 39;
+        _this.keycode_reset = 84;
         window.addEventListener("keydown", function (event) {
-            if (event.keyCode === 37) {
-                _this.is_pressed_left = true;
-            } else if (event.keyCode === 39) {
-                _this.is_pressed_right = true;
-            }
-            if ([37, 39, 84].indexOf(event.keyCode) !== -1) {
-                _this.emit("keydown", event.keyCode);
+            if (event.keyCode === _this.keycode_left) {
+                _this.emit("left");
+                event.preventDefault();
+            } else if (event.keyCode === _this.keycode_right) {
+                _this.emit("right");
+                event.preventDefault();
+            } else if (event.keyCode === _this.keycode_reset) {
+                _this.emit("reset");
                 event.preventDefault();
             }
         }, false);
-        window.addEventListener("keyup", function (event) {
-            if (event.keyCode === 37) {
-                _this.is_pressed_left = false;
-            } else if (event.keyCode === 39) {
-                _this.is_pressed_right = false;
-            }
-            if (event.keyCode === 37 || event.keyCode === 39) {
-                _this.emit("keyup", event.keyCode);
-                event.preventDefault();
-            }
-        }, false);
+        // touch event
+        var left_button = new PIXI.Sprite(PIXI.Texture.EMPTY);
+        stage.addChild(left_button);
+        left_button.x = left_button.y = 0;
+        left_button.height = 128;
+        left_button.width = 64;
+        left_button.interactive = true;
+        left_button.on("click", function () {
+            return _this.emit("left");
+        });
+        left_button.on("touchstart", function () {
+            return _this.emit("left");
+        });
+        var right_button = new PIXI.Sprite(PIXI.Texture.EMPTY);
+        stage.addChild(right_button);
+        right_button.x = 64;
+        right_button.y = 0;
+        right_button.height = 128;
+        right_button.width = 64;
+        right_button.interactive = true;
+        right_button.on("click", function () {
+            return _this.emit("right");
+        });
+        right_button.on("touchstart", function () {
+            return _this.emit("right");
+        });
         return _this;
     }
 
@@ -1357,6 +1670,11 @@ var EffectManager = exports.EffectManager = function (_PIXI$Container) {
         key: "getCoolScore",
         value: function getCoolScore() {
             this.fennec_label.setLife(10);
+        }
+    }, {
+        key: "enterAIMode",
+        value: function enterAIMode() {
+            this.arai_san_label.setLife(10);
         }
     }]);
 
